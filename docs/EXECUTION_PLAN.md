@@ -128,5 +128,6 @@
 - [COMPLETED] Trip Playback: Replay animates truck marker from tripHistory
 - [FIXED] CORS: Gateway allows http://localhost:5000
 - [ARCHITECTURE] All frontend traffic now goes through GraphQL Gateway (4001)
+- [VERIFIED] Payment link returns local portal URL (http://localhost:8004/api/v1/payments/portal/{link_id})
 
 ## Overall Status: 100% COMPLETE

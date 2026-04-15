@@ -832,4 +832,6 @@ type Mutation {
 - **AI Reasoning Feed**: Step-by-Step Timeline with icons (Planner, Fleet, Decision, Match)
 - **Trip Playback**: Replay button animates truck marker from tripHistory coordinates
 - **Payment Mutation**: `getPaymentLink(invoiceId, amountEgp, userId) -> PaymentLinkResult`
+- **Payment Flow**: Gateway (4001) -> FinTrack (8004) -> Local Portal (http://localhost:8004/api/v1/payments/portal/{link_id})
 - **UI Polish**: Map 800px height, Sidebar z-index 1001, Status colors (Emerald/Blue/Amber/Gray)
+- **Verification**: Payment link returns local portal URL (not Paymob external)
