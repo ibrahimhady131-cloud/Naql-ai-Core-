@@ -819,3 +819,11 @@ type Mutation {
   - `loading`
   - `offline` (optional, used to simulate dropouts)
 - **Rule**: Each registered truck is assigned a randomized status at creation time and/or periodically updated.
+
+### Architecture: Gateway-Centric (ALL Frontend Traffic via Port 4001)
+- **Principle**: Frontend (5000) NEVER calls backend services directly. All traffic MUST go through GraphQL Gateway on port 4001.
+- **Payment Flow**:
+  - Frontend calls GraphQL Mutation `getPaymentLink` on Gateway (4001)
+  - Gateway calls FinTrack Service (8004) via HTTP internally
+  - Gateway returns payment portal URL to Frontend
+- **CORS**: All services (identity, fleet, matching, fintrack, telemetry, agent, gateway) must allow http://localhost:5000

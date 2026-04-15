@@ -124,6 +124,16 @@ class ChatResponse:
 
 
 @strawberry.type
+class PaymentLinkResult:
+    """Payment link response from FinTrack via Gateway."""
+
+    link_id: str
+    url: str
+    qr_code: str
+    expires_at: str
+
+
+@strawberry.type
 class Shipment:
     """Shipment entity type."""
 
@@ -600,6 +610,18 @@ class Mutation:
             session_id=data.get("session_id", ""),
             response=data.get("response", ""),
             intent=data.get("intent", "general"),
+        )
+
+    @strawberry.mutation
+    async def get_payment_link(self, invoice_id: str, amount_egp: float, user_id: str) -> PaymentLinkResult:
+        """Generate a payment link via FinTrack Service (Gateway-centric - frontend never calls 8004 directly)."""
+        client = get_service_client()
+        data = client.create_payment_link(invoice_id, amount_egp, user_id)
+        return PaymentLinkResult(
+            link_id=data.get("link_id", ""),
+            url=data.get("url", ""),
+            qr_code=data.get("qr_code", ""),
+            expires_at=data.get("expires_at", ""),
         )
 
 

@@ -1,10 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery, gql } from "@apollo/client";
+import { useQuery, gql, useMutation } from "@apollo/client";
 import { X, Play, Pause, RotateCcw, CreditCard, CheckCircle, Loader2 } from "lucide-react";
 
-const FINTRACK_BASE_URL = process.env.NEXT_PUBLIC_FINTRACK_URL ?? "http://localhost:8004";
+const GET_PAYMENT_LINK_MUTATION = gql`
+  mutation GetPaymentLink($invoiceId: String!, $amountEgp: Float!, $userId: String!) {
+    getPaymentLink(invoiceId: $invoiceId, amountEgp: $amountEgp, userId: $userId) {
+      linkId
+      url
+      qrCode
+      expiresAt
+    }
+  }
+`;
 
 const AI_REASONING_QUERY = gql`
   query GetAIReasoning($shipmentId: String!) {
@@ -120,24 +129,25 @@ export default function LifecycleSidebar({
     setIsPlaying(true);
   };
 
+  const [getPaymentLink, { loading: mutationLoading }] = useMutation(GET_PAYMENT_LINK_MUTATION);
+
   const handlePayNow = async () => {
     setPaymentLoading(true);
     try {
-      const params = new URLSearchParams({
-        invoice_id: shipmentId ?? "mock-invoice",
-        amount_egp: String(invoiceAmount),
-        user_id: "mock-user",
-        payment_method: "paymob",
+      const { data } = await getPaymentLink({
+        variables: {
+          invoiceId: shipmentId ?? "mock-invoice",
+          amountEgp: invoiceAmount,
+          userId: "mock-user",
+        },
       });
-      const resp = await fetch(`${FINTRACK_BASE_URL}/api/v1/payments/link?${params.toString()}`, {
-        method: "POST",
-      });
-      const data = await resp.json();
-      if (!resp.ok) {
-        throw new Error(data?.detail ?? "Failed to create payment link");
+      if (data?.getPaymentLink?.url) {
+        setPaymentLink(data.getPaymentLink.url);
+        setPaymentSuccess(true);
+      } else {
+        setPaymentLink(null);
+        setPaymentSuccess(false);
       }
-      setPaymentLink(data?.url ?? null);
-      setPaymentSuccess(true);
     } catch (e) {
       setPaymentLink(null);
       setPaymentSuccess(false);

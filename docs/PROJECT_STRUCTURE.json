@@ -118,6 +118,7 @@
     "fintrack-service": {
       "port": 8004,
       "api_prefix": "/api/v1",
+      "gateway_integration": "Called via Gateway (4001) for all frontend traffic. Frontend NEVER calls this service directly.",
       "persistence": {
         "status": "VERIFIED",
         "verification": {
@@ -140,7 +141,11 @@
         "POST /api/v1/escrow/release",
         "POST /api/v1/payments",
         "GET /api/v1/balance/{user_id}",
-        "GET /api/v1/transactions/{user_id}"
+        "GET /api/v1/transactions/{user_id}",
+        "POST /api/v1/payments/link",
+        "GET /api/v1/payments/portal/{link_id}",
+        "POST /api/v1/payments/portal/{link_id}/confirm",
+        "POST /api/v1/payments/webhook"
       ]
     },
     "telemetry-ingress": {

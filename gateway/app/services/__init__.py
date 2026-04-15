@@ -174,3 +174,17 @@ class ServiceClient:
         resp.raise_for_status()
         data = resp.json()
         return data.get("reasoning", [])
+
+    # -- FinTrack Service (Payments) ----------------------------------------------
+
+    def create_payment_link(self, invoice_id: str, amount_egp: float, user_id: str) -> dict[str, Any]:
+        """POST /api/v1/payments/link -> FinTrack Service (via Gateway)."""
+        params = {
+            "invoice_id": invoice_id,
+            "amount_egp": amount_egp,
+            "user_id": user_id,
+            "payment_method": "paymob",
+        }
+        resp = self._client.post(f"{self._fintrack_url}/api/v1/payments/link", params=params)
+        resp.raise_for_status()
+        return resp.json()
