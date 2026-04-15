@@ -86,3 +86,41 @@
   - [VERIFIED] Live Map polls every 3 seconds for truck position (ID: 1af055fa-58d9-4624-9ccf-e800580d1f11)
   - [VERIFIED] npm install completed in frontend/
   - [VERIFIED] Git repository pushed to https://github.com/ibrahimhady131-cloud/Naql-ai-Core
+
+## Phase 10: Financial Bridge (Paymob/Fawry)
+- [COMPLETED] Task 10.1: Payment Link Generation
+  - [VERIFIED] POST /api/v1/payments/link generates Paymob/Fawry style payment links
+  - [VERIFIED] Webhook endpoint /api/v1/payments/webhook for payment confirmation
+- [COMPLETED] Task 10.2: Frontend Pay Now Button
+  - [VERIFIED] LifecycleSidebar includes Pay Now button with payment flow
+
+## Phase 11: Digital Twin & Mega-Flood
+- [COMPLETED] Task 11.1: Mega Simulator
+  - [VERIFIED] scripts/mega_simulator.py registers 100 trucks via HTTP
+  - [VERIFIED] MQTT telemetry published every 2 seconds
+  - [VERIFIED] Shipment generation every 15 seconds
+  - [FIXED] TruckRegisterRequest schema - region_code required (EG-XXX format)
+- [COMPLETED] Task 11.2: GraphQL Schema Updates
+  - [VERIFIED] tripHistory(shipmentId) query added
+  - [VERIFIED] aiReasoning(shipmentId) query added
+- [COMPLETED] Task 11.3: Frontend Dashboard
+  - [VERIFIED] Leaflet map with marker clustering for 100+ trucks
+  - [VERIFIED] LifecycleSidebar with AI reasoning feed and status stepper
+  - [VERIFIED] Trip playback with replay button
+
+## Phase 11 Verification (Flood)
+- [VERIFIED] Gateway responds on http://localhost:4001/graphql
+- [VERIFIED] Query `{ trucks { id licensePlate status } }` returns trucks
+
+## Phase 12: Production Readiness
+- [COMPLETED] Task 12.1: LLM-Ready Agent
+  - [VERIFIED] USE_REAL_LLM env var in agent-orchestrator config
+  - [VERIFIED] Switch between Logic-Mode and LLM-Mode
+- [COMPLETED] Task 12.2: Dashboard Status Command
+  - [VERIFIED] python scripts/naql_manager.py status shows all services health
+
+## Phase 12: UI Polish (Started)
+- [IN_PROGRESS] Map height upgrade + sidebar z-index rules
+- [IN_PROGRESS] Sidebar AI reasoning fetch/display hardening
+
+## Overall Status: 98% COMPLETE

@@ -130,7 +130,7 @@ export default function LifecycleSidebar({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed right-0 top-0 h-full w-96 bg-gray-900 border-l border-gray-800 shadow-2xl z-50 overflow-y-auto">
+    <div className="fixed right-0 top-0 h-full w-96 bg-gray-900 border-l border-gray-800 shadow-2xl z-[1001] overflow-y-auto">
       <div className="p-4 border-b border-gray-800 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-white">Shipment Details</h2>
         <button onClick={onClose} className="p-1 hover:bg-gray-800 rounded">

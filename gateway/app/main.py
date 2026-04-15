@@ -16,7 +16,7 @@ from .graphql.schema import schema
 
 def _parse_cors_origins() -> list[str]:
     """Parse GATEWAY_CORS_ORIGINS env var into a list of allowed origins."""
-    raw = os.getenv("GATEWAY_CORS_ORIGINS", "http://localhost:3000")
+    raw = os.getenv("GATEWAY_CORS_ORIGINS", "http://localhost:3000,http://localhost:5000")
     return [o.strip() for o in raw.split(",") if o.strip()]
 
 

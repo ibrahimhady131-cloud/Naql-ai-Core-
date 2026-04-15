@@ -28,31 +28,31 @@ EGYPTIAN_CITIES = {
     "fayoum": (29.3099, 30.8418),
 }
 
-TRUCK_TYPES = ["flatbed", "box_truck", "tanker", "dump_truck", " refrigerated"]
+TRUCK_TYPES = ["flatbed", "tanker", "refrigerated", "trailer", "full"]
 STATUSES = ["available", "en_route", "loading", "offline"]
 
 class MegaSimulator:
     def __init__(self):
         self.truck_ids = []
         self.shipment_ids = []
-        self.telemetry_client = None
+        self.http_client = None
         self.mqtt_client = None
 
-    async def start(self):
+    def start(self):
         print("=" * 60)
         print("MEGA SIMULATOR - 100 TRUCKS FLOOD")
         print("=" * 60)
         
-        self.telemetry_client = httpx.AsyncClient(timeout=30.0)
+        self.http_client = httpx.Client(timeout=30.0)
         
         try:
-            await self.register_100_trucks()
+            self.register_100_trucks()
             print(f"\n[OK] Registered {len(self.truck_ids)} trucks")
             
-            await self.start_mqtt_telemetry()
+            self.start_mqtt_telemetry()
             print("[OK] MQTT telemetry started")
             
-            await self.start_shipment_generator()
+            self.start_shipment_generator()
             print("[OK] Shipment generator started")
             
             print("\n" + "=" * 60)
@@ -66,44 +66,66 @@ class MegaSimulator:
             print("=" * 60)
             
             while True:
-                await asyncio.sleep(1)
+                time.sleep(1)
                 
         except KeyboardInterrupt:
             print("\n[STOPPED] Mega simulator stopped")
         finally:
-            await self.telemetry_client.aclose()
+            self.http_client.close()
 
-    async def register_100_trucks(self):
+    def register_100_trucks(self):
         print("\n[1/4] Registering 100 trucks...")
         
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            for i in range(100):
-                truck_id = str(uuid.uuid4())
-                city_name = random.choice(list(EGYPTIAN_CITIES.keys()))
-                base_lat, base_lng = EGYPTIAN_CITIES[city_name]
-                
-                truck_data = {
-                    "license_plate": f"EG-{1000 + i:03d}",
-                    "truck_type": random.choice(TRUCK_TYPES),
-                    "load_capacity_kg": random.randint(5000, 25000),
-                    "fuel_level": random.randint(20, 100),
-                    "status": "available",
-                    "current_latitude": base_lat + random.uniform(-0.1, 0.1),
-                    "current_longitude": base_lng + random.uniform(-0.1, 0.1),
-                    "owner_id": str(uuid.uuid4()),
-                }
-                
-                try:
-                    resp = await client.post(f"{FLEET_URL}/trucks", json=truck_data)
-                    if resp.status_code in (200, 201):
-                        self.truck_ids.append(truck_id)
-                except Exception as e:
-                    pass
-                
-                if (i + 1) % 20 == 0:
-                    print(f"  Registered {i + 1}/100 trucks...")
+        regions = ["CAI", "ALX", "SUE", "GIZ", "MAN", "TAN", "ZAG", "ISM", "FAY", "POR"]
+        run_seed = int(time.time()) % 100000
+        
+        for i in range(100):
+            region = random.choice(regions)
+            initial_status = random.choices(
+                population=["available", "en_route", "loading", "offline"],
+                weights=[0.55, 0.25, 0.15, 0.05],
+                k=1,
+            )[0]
+            
+            truck_data = {
+                "license_plate": f"EG{run_seed:05d}{i:03d}",
+                "truck_type": random.choice(TRUCK_TYPES),
+                "load_capacity_kg": random.randint(5000, 25000),
+                "owner_id": str(uuid.uuid4()),
+                "region_code": f"EG-{region}",
+            }
+            
+            try:
+                resp = self.http_client.post(f"{FLEET_URL}/trucks", json=truck_data)
+                if resp.status_code in (200, 201):
+                    created = resp.json() if resp.content else {}
+                    created_id = str(created.get("id", "")).strip()
+                    if created_id:
+                        self.truck_ids.append(created_id)
+                    else:
+                        print(f"  [WARN] Created truck missing id: {truck_data['license_plate']}")
 
-    async def start_mqtt_telemetry(self):
+                    if created_id and initial_status != "offline":
+                        try:
+                            patch = self.http_client.patch(
+                                f"{FLEET_URL}/trucks/{created_id}",
+                                json={"status": initial_status},
+                            )
+                            if patch.status_code not in (200, 204):
+                                print(f"  [WARN] Status patch failed {patch.status_code}: {patch.text[:80]}")
+                        except Exception as e:
+                            print(f"  [WARN] Status patch error: {e}")
+
+                    print(f"  [OK] {truck_data['license_plate']} - {truck_data['truck_type']} - {initial_status}")
+                else:
+                    print(f"  [FAIL] {resp.status_code}: {resp.text[:80]}")
+            except Exception as e:
+                print(f"  [ERR] {e}")
+            
+            if (i + 1) % 20 == 0:
+                print(f"  Registered {i + 1}/100 trucks...")
+
+    def start_mqtt_telemetry(self):
         print("\n[2/4] Starting MQTT telemetry publisher...")
         
         try:
@@ -118,9 +140,9 @@ class MegaSimulator:
         self.mqtt_client.connect(MQTT_BROKER, MQTT_PORT, 60)
         self.mqtt_client.loop_start()
         
-        asyncio.create_task(self.publish_telemetry_loop())
+        self.publish_telemetry_loop()
 
-    async def publish_telemetry_loop(self):
+    def publish_telemetry_loop(self):
         while True:
             for truck_id in self.truck_ids:
                 city_name = random.choice(list(EGYPTIAN_CITIES.keys()))
@@ -153,23 +175,23 @@ class MegaSimulator:
                     pass
                 
                 try:
-                    await self.telemetry_client.post(
+                    self.http_client.post(
                         f"{TELEMETRY_URL}/telemetry",
                         json=payload
                     )
                 except:
                     pass
             
-            await asyncio.sleep(2)
+            time.sleep(2)
 
-    async def start_shipment_generator(self):
+    def start_shipment_generator(self):
         print("\n[3/4] Starting shipment generator (every 15s)...")
-        asyncio.create_task(self.create_shipments_loop())
+        self.create_shipments_loop()
 
-    async def create_shipments_loop(self):
+    def create_shipments_loop(self):
         shipment_counter = 1
         while True:
-            await asyncio.sleep(15)
+            time.sleep(15)
             
             origin_city = random.choice(list(EGYPTIAN_CITIES.keys()))
             dest_city = random.choice(list(EGYPTIAN_CITIES.keys()))
@@ -192,16 +214,15 @@ class MegaSimulator:
             }
             
             try:
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    resp = await client.post(f"{MATCHING_URL}/shipments", json=shipment_data)
-                    if resp.status_code in (200, 201):
-                        shipment_id = resp.json().get("id", "unknown")
-                        self.shipment_ids.append(shipment_id)
-                        print(f"\n[SHIPMENT #{shipment_counter}] {origin_city} -> {dest_city} | ID: {shipment_id[:8]}...")
-                        shipment_counter += 1
-            except Exception as e:
+                resp = self.http_client.post(f"{MATCHING_URL}/shipments", json=shipment_data)
+                if resp.status_code in (200, 201):
+                    shipment_id = resp.json().get("id", "unknown")
+                    self.shipment_ids.append(shipment_id)
+                    print(f"\n[SHIPMENT #{shipment_counter}] {origin_city} -> {dest_city} | ID: {shipment_id[:8]}...")
+                    shipment_counter += 1
+            except Exception:
                 pass
 
 if __name__ == "__main__":
     simulator = MegaSimulator()
-    asyncio.run(simulator.start())
+    simulator.start()

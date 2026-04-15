@@ -43,7 +43,7 @@ const ALL_POSITIONS_QUERY = gql`
 `;
 
 export default function DashboardPage() {
-  const { data: trucksData, loading: trucksLoading, refetch: refetchTrucks } = useQuery(TRUCKS_QUERY, {
+  const { data: trucksData, loading: trucksLoading, error: trucksError, refetch: refetchTrucks } = useQuery(TRUCKS_QUERY, {
     pollInterval: 5000,
   });
   const { data: shipmentsData, loading: shipmentsLoading } = useQuery(SHIPMENTS_QUERY, {
@@ -54,17 +54,24 @@ export default function DashboardPage() {
   const [selectedTruck, setSelectedTruck] = useState<TruckPosition | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Debug: Log GraphQL data
+  console.log(">>> GraphQL trucksData:", trucksData);
+  console.log(">>> GraphQL trucksError:", trucksError);
+  console.log(">>> trucksLoading:", trucksLoading);
+
   useEffect(() => {
-    const trucks = trucksData?.trucks || [];
-    const mockPositions: TruckPosition[] = trucks.map((t: { id: string; status: string }) => ({
-      truck_id: t.id,
-      latitude: 30.0444 + (Math.random() - 0.5) * 2,
-      longitude: 31.2357 + (Math.random() - 0.5) * 2,
-      speed_kmh: Math.random() * 80,
-      heading: Math.random() * 360,
-      status: t.status as "available" | "en_route" | "loading" | "offline",
-    }));
-    setPositions(mockPositions);
+    if (trucksData?.trucks) {
+      console.log(">>> Processing", trucksData.trucks.length, "trucks");
+      const mockPositions: TruckPosition[] = trucksData.trucks.map((t: { id: string; status: string }) => ({
+        truck_id: t.id,
+        latitude: 30.0444 + (Math.random() - 0.5) * 2,
+        longitude: 31.2357 + (Math.random() - 0.5) * 2,
+        speed_kmh: Math.random() * 80,
+        heading: Math.random() * 360,
+        status: (t.status as string) || "available",
+      }));
+      setPositions(mockPositions);
+    }
   }, [trucksData]);
 
   const handleTruckClick = (truck: TruckPosition) => {
@@ -74,7 +81,7 @@ export default function DashboardPage() {
 
   const trucks = trucksData?.trucks || [];
   const shipments = shipmentsData?.shipments || [];
-  const activeTrucks = trucks.filter((t: { status: string }) => t.status === "available").length;
+  const activeTrucks = trucks.filter((t: { status: string }) => t.status !== "offline").length;
   const enRouteTrucks = trucks.filter((t: { status: string }) => t.status === "en_route").length;
   const pendingShipments = shipments.filter((s: { status: string }) => s.status === "pending").length;
 
@@ -143,7 +150,7 @@ export default function DashboardPage() {
         <LiveMap
           positions={positions}
           showHubs
-          className="h-[500px] w-full"
+          className="h-[800px] w-full"
           onTruckClick={handleTruckClick}
         />
       </div>

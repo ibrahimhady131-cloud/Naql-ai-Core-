@@ -59,59 +59,21 @@ export default function LiveMap({
   onTruckClick,
 }: LiveMapProps) {
   const [isClient, setIsClient] = useState(false);
-  const clusterGroupRef = useRef<L.MarkerClusterGroup | null>(null);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  useEffect(() => {
-    if (isClient && clusterGroupRef.current && positions.length > 0) {
-      const cluster = clusterGroupRef.current;
-      cluster.clearLayers();
-      
-      positions.forEach((pos) => {
-        const marker = L.marker([pos.latitude, pos.longitude], {
-          icon: createTruckIcon(pos.status),
-        });
-        
-        marker.bindPopup(`
-          <div style="font-family:sans-serif;font-size:13px">
-            <strong>${pos.truck_id}</strong><br/>
-            Speed: ${pos.speed_kmh.toFixed(0)} km/h<br/>
-            Status: <span style="color:${STATUS_COLORS[pos.status]}">${pos.status}</span>
-          </div>
-        `);
-        
-        if (onTruckClick) {
-          marker.on("click", () => onTruckClick(pos));
-        }
-        
-        cluster.addLayer(marker);
-      });
-    }
-  }, [positions, isClient, onTruckClick]);
-
   if (!isClient) {
     return (
-      <div className={`flex items-center justify-center rounded-xl bg-gray-900 text-gray-400 ${className}`} style={{ height: 400 }}>
+      <div className={`flex items-center justify-center rounded-xl bg-gray-900 text-gray-400 ${className}`}>
         <p className="text-lg font-medium">Loading map...</p>
       </div>
     );
   }
 
-  const handleMapReady = useCallback((map: L.Map) => {
-    clusterGroupRef.current = L.markerClusterGroup({
-      chunkedLoading: true,
-      spiderfyOnMaxZoom: true,
-      showCoverageOnHover: false,
-      maxClusterRadius: 50,
-    });
-    map.addLayer(clusterGroupRef.current);
-  }, []);
-
   return (
-    <div className={`rounded-xl overflow-hidden ${className}`} style={{ height: 400 }}>
+    <div className={`rounded-xl overflow-hidden ${className}`}>
       <MapContainer center={MAP_CENTER} zoom={MAP_ZOOM} style={{ height: "100%", width: "100%" }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -120,6 +82,17 @@ export default function LiveMap({
         <MapUpdater positions={positions} />
         {showHubs && Object.entries(LOGISTICS_HUBS).map(([id, hub]) => (
           <Circle key={id} center={[hub.lat, hub.lng]} radius={hub.radius_km * 1000} pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 0.1 }} />
+        ))}
+        {positions.map((pos) => (
+          <Marker key={pos.truck_id} position={[pos.latitude, pos.longitude]} icon={createTruckIcon(pos.status)} eventHandlers={{ click: () => onTruckClick?.(pos) }}>
+            <Popup>
+              <div style={{ fontFamily: "sans-serif", fontSize: "13px" }}>
+                <strong>{pos.truck_id}</strong><br />
+                Speed: {pos.speed_kmh.toFixed(0)} km/h<br />
+                Status: <span style={{ color: STATUS_COLORS[pos.status] }}>{pos.status}</span>
+              </div>
+            </Popup>
+          </Marker>
         ))}
       </MapContainer>
     </div>

@@ -46,7 +46,8 @@
       },
       "tables": [
         "trucks",
-        "truck_maintenance"
+        "truck_telemetry",
+        "maintenance_records"
       ],
       "endpoints": [
         "POST /api/v1/trucks",
@@ -55,7 +56,21 @@
         "PATCH /api/v1/trucks/{truck_id}",
         "GET /api/v1/trucks/owner/{owner_id}",
         "POST /api/v1/trucks/{truck_id}/maintenance"
-      ]
+      ],
+      "schemas": {
+        "TruckRegisterRequest": {
+          "required": ["owner_id", "license_plate", "truck_type", "load_capacity_kg", "region_code"],
+          "truck_type_pattern": "^(quarter|half|full|jumbo|trailer|refrigerated|tanker|flatbed)$",
+          "region_code_pattern": "^EG-[A-Z]{3}$",
+          "example": {
+            "owner_id": "uuid-string",
+            "license_plate": "EG-1001",
+            "truck_type": "flatbed",
+            "load_capacity_kg": 15000,
+            "region_code": "EG-CAI"
+          }
+        }
+      }
     },
     "matching-engine": {
       "port": 8003,
@@ -157,13 +172,28 @@
       "endpoints": []
     },
     "gateway": {
-      "port": 4000,
-      "api_prefix": null,
-      "persistence": {
-        "status": "PENDING"
-      },
-      "tables": [],
-      "endpoints": []
+      "port": 4001,
+      "graphql": "/graphql",
+      "health": "/health"
+    },
+    "frontend": {
+      "port": 5000,
+      "dashboard": "/dashboard",
+      "uiux_schema": {
+        "truck_status_color_mapping": {
+          "available": "emerald (bg-emerald-500)",
+          "en_route": "blue (bg-blue-500)",
+          "loading": "amber (bg-amber-500)",
+          "offline": "gray (bg-gray-500)"
+        },
+        "layout_architecture": {
+          "sidebar_over_map": true,
+          "sidebar_target_z_index": 1001
+        }
+      }
+    },
+    "mqtt": {
+      "port": 1883
     }
   },
   "database_tables_current": [

@@ -795,3 +795,27 @@ type Mutation {
 - [VERIFIED] Dashboard uses live GraphQL queries (trucks, shipments, getLiveLocation)
 - [VERIFIED] Live Map polls every 3 seconds for truck position (ID: 1af055fa-58d9-4624-9ccf-e800580d1f11)
 - [VERIFIED] npm install completed in frontend/
+
+### UI/UX Schema: Truck Status Color Mapping (Dashboard Legend)
+- **available**: Emerald (`bg-emerald-500`)
+- **en_route**: Blue (`bg-blue-500`)
+- **loading**: Amber (`bg-amber-500`)
+- **offline**: Gray (`bg-gray-500`)
+
+### UI/UX Layout Architecture: Sidebar-over-Map (Dashboard)
+- **Map**: Primary canvas (Leaflet) inside the dashboard layout.
+- **Sidebar overlay**: `LifecycleSidebar` renders as a fixed overlay on the right side.
+- **Z-index hierarchy**:
+  - Map layer: default Leaflet panes (base)
+  - Sidebar overlay: must be higher than all map panes (target z-index: `1001`)
+- **Interaction rule**: Clicking a truck marker opens the sidebar without unmounting the map.
+
+### Simulation Schema: Mega Flood Truck Status Randomization
+- **File**: `scripts/mega_simulator.py`
+- **Purpose**: Create varied, realistic operational states for 100 trucks.
+- **Status set**:
+  - `available`
+  - `en_route`
+  - `loading`
+  - `offline` (optional, used to simulate dropouts)
+- **Rule**: Each registered truck is assigned a randomized status at creation time and/or periodically updated.
