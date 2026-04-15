@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useQuery, gql } from "@apollo/client";
 import { X, Play, Pause, RotateCcw, CreditCard, CheckCircle, Loader2 } from "lucide-react";
 
+const FINTRACK_BASE_URL = process.env.NEXT_PUBLIC_FINTRACK_URL ?? "http://localhost:8004";
+
 const AI_REASONING_QUERY = gql`
   query GetAIReasoning($shipmentId: String!) {
     aiReasoning(shipmentId: $shipmentId) {
@@ -120,13 +122,28 @@ export default function LifecycleSidebar({
 
   const handlePayNow = async () => {
     setPaymentLoading(true);
-    // Simulate payment link generation
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    const iframeId = 123456;
-    const paymentToken = "tok_mock_ABC123DEF456";
-    setPaymentLink(`https://accept.paymob.com/api/acceptance/iframes/${iframeId}?payment_token=${paymentToken}`);
-    setPaymentLoading(false);
-    setPaymentSuccess(true);
+    try {
+      const params = new URLSearchParams({
+        invoice_id: shipmentId ?? "mock-invoice",
+        amount_egp: String(invoiceAmount),
+        user_id: "mock-user",
+        payment_method: "paymob",
+      });
+      const resp = await fetch(`${FINTRACK_BASE_URL}/api/v1/payments/link?${params.toString()}`, {
+        method: "POST",
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        throw new Error(data?.detail ?? "Failed to create payment link");
+      }
+      setPaymentLink(data?.url ?? null);
+      setPaymentSuccess(true);
+    } catch (e) {
+      setPaymentLink(null);
+      setPaymentSuccess(false);
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
   if (!isOpen) return null;

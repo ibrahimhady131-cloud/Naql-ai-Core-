@@ -6,6 +6,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import HTMLResponse
 from sqlalchemy import select
 
 from naql_common.utils import TruckType
@@ -292,7 +293,7 @@ async def create_payment_link(
         "user_id": user_id,
         "payment_method": payment_method,
         "status": "pending",
-        "url": f"https://accept.paymob.com/api/acceptance/iframes/{link_id}",
+        "url": f"http://localhost:8004/api/v1/payments/portal/{link_id}",
         "qr_code": f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={link_id}",
         "expires_at": datetime.now(UTC) + timedelta(hours=24),
         "created_at": datetime.now(UTC),
@@ -316,8 +317,58 @@ async def get_payment_link(link_id: str) -> dict:
     return link
 
 
+@router.get("/payments/portal/{link_id}", response_class=HTMLResponse)
+async def payment_portal(link_id: str) -> HTMLResponse:
+    """Local mock payment portal UI.
+
+    This avoids hitting Paymob directly (which requires a signed payment token).
+    """
+    link = _payment_links_db.get(link_id)
+    if not link:
+        return HTMLResponse(
+            f"<html><body><h2>Payment Link Not Found</h2><p>link_id={link_id}</p></body></html>",
+            status_code=404,
+        )
+
+    amount = float(link.get("amount_egp", 0.0))
+    status_txt = str(link.get("status", "pending"))
+
+    html = f"""
+    <html>
+      <head>
+        <meta charset='utf-8' />
+        <meta name='viewport' content='width=device-width, initial-scale=1' />
+        <title>Naql.ai Mock Payment Portal</title>
+      </head>
+      <body style='font-family: sans-serif; max-width: 720px; margin: 30px auto; padding: 0 16px;'>
+        <h2>Naql.ai Mock Payment Portal</h2>
+        <p><strong>Link ID:</strong> {link_id}</p>
+        <p><strong>Amount:</strong> {amount:.2f} EGP</p>
+        <p><strong>Status:</strong> {status_txt}</p>
+
+        <form method='post' action='/api/v1/payments/portal/{link_id}/confirm'>
+          <button type='submit' style='padding: 10px 14px; background: #16a34a; border: 0; color: white; border-radius: 8px; cursor: pointer;'>
+            Mark as Paid
+          </button>
+        </form>
+      </body>
+    </html>
+    """
+    return HTMLResponse(html)
+
+
+@router.post("/payments/portal/{link_id}/confirm", response_class=HTMLResponse)
+async def payment_portal_confirm(link_id: str, session: CockroachSession) -> HTMLResponse:
+    """Confirm a payment from the local portal by invoking the webhook logic."""
+    await payment_webhook({"link_id": link_id, "status": "success", "transaction_id": f"TX-{uuid.uuid4().hex[:10]}"}, session)
+    return HTMLResponse(
+        "<html><body><h2>Payment Confirmed</h2><p>You can close this tab now.</p></body></html>",
+        status_code=200,
+    )
+
+
 @router.post("/payments/webhook")
-async def payment_webhook(payload: dict) -> dict:
+async def payment_webhook(payload: dict, session: CockroachSession) -> dict:
     """Webhook endpoint for payment confirmation from Paymob/Fawry."""
     # Validate webhook payload (in production, verify signature)
     link_id = payload.get("link_id") or payload.get("merchant_order_id")
