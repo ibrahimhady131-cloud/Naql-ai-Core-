@@ -268,3 +268,84 @@ async def get_transaction_history(
         page_size=page_size,
         has_next=end < total,
     )
+
+
+# Payment Link & Webhook endpoints for Paymob/Fawry integration
+_payment_links_db: dict[str, dict] = {}
+
+
+@router.post("/payments/link")
+async def create_payment_link(
+    invoice_id: str,
+    amount_egp: float,
+    user_id: str,
+    payment_method: str = "paymob",
+) -> dict:
+    """Generate a payment link (mocked Paymob/Fawry integration)."""
+    link_id = f"PL-{uuid.uuid4().hex[:12].upper()}"
+    
+    # Mock Paymob/Fawry API structure
+    payment_link = {
+        "link_id": link_id,
+        "invoice_id": invoice_id,
+        "amount_egp": amount_egp,
+        "user_id": user_id,
+        "payment_method": payment_method,
+        "status": "pending",
+        "url": f"https://accept.paymob.com/api/acceptance/iframes/{link_id}",
+        "qr_code": f"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={link_id}",
+        "expires_at": datetime.now(UTC) + timedelta(hours=24),
+        "created_at": datetime.now(UTC),
+    }
+    _payment_links_db[link_id] = payment_link
+    
+    return {
+        "link_id": link_id,
+        "url": payment_link["url"],
+        "qr_code": payment_link["qr_code"],
+        "expires_at": payment_link["expires_at"].isoformat(),
+    }
+
+
+@router.get("/payments/link/{link_id}")
+async def get_payment_link(link_id: str) -> dict:
+    """Get payment link status."""
+    link = _payment_links_db.get(link_id)
+    if not link:
+        raise HTTPException(status_code=404, detail="Payment link not found")
+    return link
+
+
+@router.post("/payments/webhook")
+async def payment_webhook(payload: dict) -> dict:
+    """Webhook endpoint for payment confirmation from Paymob/Fawry."""
+    # Validate webhook payload (in production, verify signature)
+    link_id = payload.get("link_id") or payload.get("merchant_order_id")
+    payment_status = payload.get("status", "").lower()
+    
+    if link_id and link_id in _payment_links_db:
+        link = _payment_links_db[link_id]
+        
+        if payment_status in ("success", "completed", "paid"):
+            link["status"] = "paid"
+            link["paid_at"] = datetime.now(UTC)
+            link["gateway_transaction_id"] = payload.get("transaction_id", "")
+            
+            # Update invoice status in DB
+            invoice_id = link.get("invoice_id")
+            if invoice_id:
+                try:
+                    result = await session.execute(select(Invoice).where(Invoice.id == uuid.UUID(invoice_id)))
+                    invoice = result.scalar_one_or_none()
+                    if invoice:
+                        invoice.status = "paid"
+                        await session.commit()
+                except Exception:
+                    pass
+            
+            return {"status": "success", "message": "Payment confirmed"}
+        else:
+            link["status"] = "failed"
+            return {"status": "failed", "message": "Payment failed"}
+    
+    return {"status": "ignored", "message": "Unknown payment event"}

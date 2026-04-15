@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     AGENT_TIMEOUT_SEC: int = 60
     ENABLE_SENTINEL: bool = True
 
+    # LLM Mode: Set to "true" to use real LLM, "false" for logic-based mode
+    USE_REAL_LLM: bool = False
+
     model_config = {"env_prefix": "AGENT_", "env_file": ".env"}
 
 

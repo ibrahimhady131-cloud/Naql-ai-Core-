@@ -155,6 +155,27 @@ class TelemetryStats:
     telemetry_buffer_size: int
 
 
+@strawberry.type
+class TripHistoryPoint:
+    """A single GPS point in a trip history."""
+
+    timestamp: datetime
+    latitude: float
+    longitude: float
+    speed_kmh: float
+    heading: float
+
+
+@strawberry.type
+class AIReasoningStep:
+    """A single step in the AI Agent's reasoning process."""
+
+    step: int
+    thought: str
+    action: str
+    timestamp: datetime
+
+
 # ── Inputs ─────────────────────────────────────────────────
 
 
@@ -436,6 +457,37 @@ class Query:
     async def telemetry_stats(self) -> TelemetryStats:
         """Get real-time telemetry processing stats."""
         return TelemetryStats(position_buffer_size=0, telemetry_buffer_size=0)
+
+    @strawberry.field
+    async def trip_history(self, shipment_id: str) -> list[TripHistoryPoint]:
+        """Get all GPS points for a specific trip."""
+        client = get_service_client()
+        items = client.get_trip_history(shipment_id)
+        return [
+            TripHistoryPoint(
+                timestamp=datetime.fromisoformat(str(p.get("timestamp", datetime.now(UTC).isoformat()))),
+                latitude=float(p.get("latitude", 0.0)),
+                longitude=float(p.get("longitude", 0.0)),
+                speed_kmh=float(p.get("speed_kmh", 0.0)),
+                heading=float(p.get("heading", 0.0)),
+            )
+            for p in items
+        ]
+
+    @strawberry.field
+    async def ai_reasoning(self, shipment_id: str) -> list[AIReasoningStep]:
+        """Get the AI Agent's step-by-step reasoning for a shipment."""
+        client = get_service_client()
+        items = client.get_ai_reasoning(shipment_id)
+        return [
+            AIReasoningStep(
+                step=i + 1,
+                thought=step.get("thought", ""),
+                action=step.get("action", ""),
+                timestamp=datetime.fromisoformat(str(step.get("timestamp", datetime.now(UTC).isoformat()))),
+            )
+            for i, step in enumerate(items)
+        ]
 
 
 # ── Mutations ──────────────────────────────────────────────

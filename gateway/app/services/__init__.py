@@ -156,3 +156,21 @@ class ServiceClient:
         )
         resp.raise_for_status()
         return resp.json()
+
+    def get_trip_history(self, shipment_id: str) -> list[dict[str, Any]]:
+        """GET /api/v1/trips/{shipment_id}/history -> Matching Engine."""
+        resp = self._client.get(f"{self._matching_url}/api/v1/trips/{shipment_id}/history")
+        if resp.status_code == 404:
+            return []
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("positions", [])
+
+    def get_ai_reasoning(self, shipment_id: str) -> list[dict[str, Any]]:
+        """GET /api/v1/shipments/{shipment_id}/ai_reasoning -> Matching Engine."""
+        resp = self._client.get(f"{self._matching_url}/api/v1/shipments/{shipment_id}/ai_reasoning")
+        if resp.status_code == 404:
+            return []
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("reasoning", [])

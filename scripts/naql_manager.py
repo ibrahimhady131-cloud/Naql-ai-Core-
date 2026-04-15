@@ -207,7 +207,54 @@ class NaqlManager:
         sys.exit(0)
 
 
+def status_command():
+    """Show dashboard status of all services."""
+    manager = NaqlManager()
+    
+    print(f"\n{BOLD}{'='*60}")
+    print(f"  Naql.ai Dashboard Status")
+    print(f"{'='*60}{RESET}\n")
+    
+    print(f"{BOLD}Service Health:{RESET}")
+    print("-" * 50)
+    
+    all_healthy = True
+    for svc in SERVICES:
+        is_up = manager.check_port(svc.port)
+        status = f"{GREEN}UP{RESET}" if is_up else f"{RED}DOWN{RESET}"
+        if not is_up:
+            all_healthy = False
+        print(f"  {svc.color}{svc.name:15}{RESET} : {status} (port {svc.port})")
+    
+    # Check MQTT (NATS MQTT Gateway on 1883)
+    mqtt_up = manager.check_port(1883)
+    mqtt_status = f"{GREEN}ACTIVE{RESET}" if mqtt_up else f"{YELLOW}INACTIVE{RESET}"
+    print(f"  {CYAN}MQTT (1883){RESET}    : {mqtt_status}")
+    
+    print("\n" + f"{BOLD}MQTT Message Rate:{RESET}")
+    print("-" * 50)
+    print(f"  {CYAN}Simulated Rate:{RESET} ~2 msg/sec (when mega_simulator running)")
+    print(f"  {CYAN}NATS JetStream:{RESET} {GREEN}Enabled{RESET}")
+    
+    print("\n" + f"{BOLD}Quick Actions:{RESET}")
+    print("-" * 50)
+    print("  python scripts/naql_manager.py start  - Start all services")
+    print("  python scripts/naql_manager.py status - Show this status")
+    print("  python scripts/mega_simulator.py      - Run 100 truck simulation")
+    
+    if all_healthy:
+        print(f"\n{GREEN}All services healthy!{RESET}")
+    else:
+        print(f"\n{YELLOW}Some services down. Run 'start' to launch.{RESET}")
+    
+    sys.exit(0)
+
+
 def main():
+    # Check for status command
+    if len(sys.argv) > 1 and sys.argv[1] == "status":
+        status_command()
+    
     try:
         manager = NaqlManager()
 

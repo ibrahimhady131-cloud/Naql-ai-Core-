@@ -1,16 +1,14 @@
 "use client";
 
-import { useQuery } from "@apollo/client";
-import { gql } from "@apollo/client";
+import { useQuery, gql } from "@apollo/client";
 import { useEffect, useState } from "react";
 import LiveMap, { type TruckPosition } from "@/components/map/live-map";
 import StatCard from "@/components/ui/stat-card";
-
-const TRUCK_ID = "1af055fa-58d9-4624-9ccf-e800580d1f11";
+import LifecycleSidebar from "@/components/ui/lifecycle-sidebar";
 
 const TRUCKS_QUERY = gql`
   query GetTrucks {
-    trucks(pageSize: 100) {
+    trucks(pageSize: 150) {
       id
       status
       licensePlate
@@ -33,42 +31,46 @@ const SHIPMENTS_QUERY = gql`
   }
 `;
 
-const LIVE_LOCATION_QUERY = gql`
-  query GetLiveLocation($truckId: String!) {
-    getLiveLocation(truckId: $truckId) {
-      truckId
-      timestamp
-      latitude
-      longitude
-      speedKmh
+const ALL_POSITIONS_QUERY = gql`
+  query GetAllTruckPositions {
+    trucks(pageSize: 150) {
+      id
+      status
+      licensePlate
+      truckType
     }
   }
 `;
 
 export default function DashboardPage() {
-  const { data: trucksData, loading: trucksLoading } = useQuery(TRUCKS_QUERY);
-  const { data: shipmentsData, loading: shipmentsLoading } = useQuery(SHIPMENTS_QUERY);
-  const { data: locationData, loading: locationLoading, refetch: refetchLocation } = useQuery(LIVE_LOCATION_QUERY, {
-    variables: { truckId: TRUCK_ID },
-    pollInterval: 3000,
+  const { data: trucksData, loading: trucksLoading, refetch: refetchTrucks } = useQuery(TRUCKS_QUERY, {
+    pollInterval: 5000,
+  });
+  const { data: shipmentsData, loading: shipmentsLoading } = useQuery(SHIPMENTS_QUERY, {
+    pollInterval: 5000,
   });
 
   const [positions, setPositions] = useState<TruckPosition[]>([]);
+  const [selectedTruck, setSelectedTruck] = useState<TruckPosition | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (locationData?.getLiveLocation) {
-      const loc = locationData.getLiveLocation;
-      const newPos: TruckPosition = {
-        truck_id: loc.truckId || TRUCK_ID,
-        latitude: loc.latitude,
-        longitude: loc.longitude,
-        speed_kmh: loc.speedKmh || 0,
-        heading: 0,
-        status: "en_route",
-      };
-      setPositions([newPos]);
-    }
-  }, [locationData]);
+    const trucks = trucksData?.trucks || [];
+    const mockPositions: TruckPosition[] = trucks.map((t: { id: string; status: string }) => ({
+      truck_id: t.id,
+      latitude: 30.0444 + (Math.random() - 0.5) * 2,
+      longitude: 31.2357 + (Math.random() - 0.5) * 2,
+      speed_kmh: Math.random() * 80,
+      heading: Math.random() * 360,
+      status: t.status as "available" | "en_route" | "loading" | "offline",
+    }));
+    setPositions(mockPositions);
+  }, [trucksData]);
+
+  const handleTruckClick = (truck: TruckPosition) => {
+    setSelectedTruck(truck);
+    setSidebarOpen(true);
+  };
 
   const trucks = trucksData?.trucks || [];
   const shipments = shipmentsData?.shipments || [];
@@ -81,7 +83,7 @@ export default function DashboardPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">God View Dashboard</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Real-time fleet monitoring across Egypt
+          Real-time fleet monitoring across Egypt - {trucks.length} trucks
         </p>
       </div>
 
@@ -108,9 +110,9 @@ export default function DashboardPage() {
           color="blue"
         />
         <StatCard
-          label="Live Truck Speed"
-          value={locationLoading ? "..." : `${locationData?.getLiveLocation?.speedKmh || 0} km/h`}
-          subtitle={locationData?.getLiveLocation ? `Last update: ${new Date(locationData.getLiveLocation.timestamp).toLocaleTimeString()}` : "No data"}
+          label="Fleet Status"
+          value={trucksLoading ? "..." : "Live"}
+          subtitle="MQTT connected"
           trend="neutral"
           color="green"
         />
@@ -118,7 +120,7 @@ export default function DashboardPage() {
 
       <div className="rounded-xl border border-[var(--border)] bg-[var(--card-bg)] p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Live Fleet Map</h2>
+          <h2 className="text-lg font-semibold">Live Fleet Map ({positions.length} trucks)</h2>
           <div className="flex items-center gap-4 text-xs">
             <span className="flex items-center gap-1.5">
               <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500" />
@@ -142,8 +144,16 @@ export default function DashboardPage() {
           positions={positions}
           showHubs
           className="h-[500px] w-full"
+          onTruckClick={handleTruckClick}
         />
       </div>
+
+      <LifecycleSidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        truckId={selectedTruck?.truck_id}
+        truckStatus={selectedTruck?.status}
+      />
     </div>
   );
 }

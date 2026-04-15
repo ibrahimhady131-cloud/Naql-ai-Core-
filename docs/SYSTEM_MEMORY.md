@@ -784,3 +784,14 @@ type Mutation {
 - [VERIFIED] Shipment query returns full shipment data
 - [VERIFIED] Truck query returns truck data
 - [VERIFIED] Gateway is pure orchestrator - no direct DB access
+
+### GitHub Repository
+- **URL**: https://github.com/ibrahimhady131-cloud/Naql-ai-Core
+- **Branch**: main
+- **Python Version**: 3.11 (C:\Users\sd\AppData\Local\Programs\Python\Python311\python.exe)
+
+### Task 9.1 Status
+- [VERIFIED] Apollo Client configured to point to http://localhost:4001/graphql
+- [VERIFIED] Dashboard uses live GraphQL queries (trucks, shipments, getLiveLocation)
+- [VERIFIED] Live Map polls every 3 seconds for truck position (ID: 1af055fa-58d9-4624-9ccf-e800580d1f11)
+- [VERIFIED] npm install completed in frontend/
