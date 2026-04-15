@@ -125,6 +125,7 @@ export default function LifecycleSidebar({
   }, [isPlaying, tripHistory.length]);
 
   const handleReplay = () => {
+    console.log(`[UI] Animating playback for Shipment ID: ${shipmentId || 'unknown'} with ${tripHistory.length} points`);
     setPlaybackIndex(0);
     setIsPlaying(true);
   };
@@ -259,16 +260,30 @@ export default function LifecycleSidebar({
           {reasoningLoading ? (
             <div className="text-gray-500 text-sm">Loading AI thoughts...</div>
           ) : reasoningSteps.length > 0 ? (
-            <div className="space-y-3">
-              {reasoningSteps.map((step) => (
-                <div key={step.step} className="bg-gray-800 rounded-lg p-3 border-l-2 border-blue-500">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-bold text-blue-400">Step {step.step}</span>
-                    <span className="text-xs text-gray-500">{step.action}</span>
+            <div className="relative pl-4 border-l border-gray-700 space-y-4">
+              {reasoningSteps.map((step, idx) => {
+                const icon = step.action?.toLowerCase().includes("planner") ? "???" : 
+                             step.action?.toLowerCase().includes("fleet") || step.action?.toLowerCase().includes("truck") ? "???" :
+                             step.action?.toLowerCase().includes("decision") ? "???" :
+                             step.action?.toLowerCase().includes("match") ? "???" : "??";
+                return (
+                  <div key={step.step} className="relative">
+                    <div className="absolute -left-[21px] top-1 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm">
+                      {icon}
+                    </div>
+                    <div className="bg-gray-800 rounded-lg p-3 ml-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-bold text-blue-400">Step {step.step}</span>
+                        <span className="text-xs text-gray-500">{step.action}</span>
+                      </div>
+                      <p className="text-sm text-gray-300">{step.thought}</p>
+                      <span className="text-xs text-gray-600 mt-1 block">
+                        {step.timestamp ? new Date(step.timestamp).toLocaleTimeString() : ""}
+                      </span>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-300">{step.thought}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="bg-gray-800 rounded-lg p-4">

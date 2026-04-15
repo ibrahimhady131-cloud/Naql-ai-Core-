@@ -119,12 +119,14 @@
 - [COMPLETED] Task 12.2: Dashboard Status Command
   - [VERIFIED] python scripts/naql_manager.py status shows all services health
 
-## Phase 12: UI Polish (Completed)
+## Phase 12: UI Polish (Completed) - 100%
 - [COMPLETED] Map height upgrade to 800px
 - [COMPLETED] Sidebar z-index set to 1001 (above Leaflet map)
 - [COMPLETED] Active Trucks counter excludes offline
 - [COMPLETED] Payment portal via Gateway (4001) - no direct frontend-to-8004 calls
+- [COMPLETED] AI Reasoning Feed: Step-by-Step Timeline with icons
+- [COMPLETED] Trip Playback: Replay animates truck marker from tripHistory
 - [FIXED] CORS: Gateway allows http://localhost:5000
 - [ARCHITECTURE] All frontend traffic now goes through GraphQL Gateway (4001)
 
-## Overall Status: 98% COMPLETE
+## Overall Status: 100% COMPLETE
