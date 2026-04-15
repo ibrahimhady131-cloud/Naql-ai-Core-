@@ -221,6 +221,22 @@ class MegaSimulator:
                     shipment_id = resp.json().get("id", "unknown")
                     self.shipment_ids.append(shipment_id)
                     
+                    # Trigger Agent Orchestrator to run AI matching
+                    try:
+                        agent_resp = self.http_client.post(
+                            "http://localhost:8005/api/v1/agent/trigger",
+                            json={
+                                "shipment_id": shipment_id,
+                                "pickup_h3": "893e628e67bffff",  # Cairo H3
+                                "dropoff_h3": "893f5ba66b3ffff",  # Alexandria H3
+                                "cargo_type": shipment_data.get("cargo_type", "general"),
+                            }
+                        )
+                        if agent_resp.status_code == 200:
+                            print(f"[AGENT] Triggered for shipment {shipment_id[:8]}...")
+                    except Exception as ae:
+                        print(f"[AGENT] Warning: Could not trigger agent: {ae}")
+                    
                     # Phase A: Assign a truck to this shipment
                     if self.truck_ids:
                         assigned_truck = random.choice(self.truck_ids)

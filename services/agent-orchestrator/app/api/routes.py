@@ -106,14 +106,42 @@ async def process_event(event_type: str, payload: dict) -> dict:
 
     result = await sentinel.process_event(event_type, payload)
 
-    if result is None:
-        return {"processed": True, "action_required": False}
-
     return {
-        "processed": True,
-        "action_required": True,
-        "action": result,
+        "status": "processed",
+        "event_type": event_type,
+        "result": result,
     }
+
+
+@router.post("/agent/trigger")
+async def trigger_agent(request: dict) -> dict:
+    """Trigger the agent to process a shipment (called by mega_simulator)."""
+    shipment_id = request.get("shipment_id")
+    pickup_h3 = request.get("pickup_h3", "")
+    dropoff_h3 = request.get("dropoff_h3", "")
+    cargo_type = request.get("cargo_type", "general")
+    
+    if not shipment_id:
+        return {"status": "error", "message": "shipment_id required"}
+    
+    try:
+        from ..logic.graph import run_agent_for_shipment
+        
+        result = await run_agent_for_shipment(
+            shipment_id=shipment_id,
+            pickup_h3=pickup_h3,
+            dropoff_h3=dropoff_h3,
+            cargo_type=cargo_type,
+        )
+        
+        return {
+            "status": "success",
+            "shipment_id": shipment_id,
+            "selected_truck": result.get("selected_truck_id"),
+            "thoughts_count": len(result.get("thoughts", [])),
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 @router.post("/agent/preferences")
