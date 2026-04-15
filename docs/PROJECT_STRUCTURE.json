@@ -1,0 +1,188 @@
+{
+  "repository": "BIG-DEV",
+  "architecture": {
+    "style": "Event-Driven Microservices Architecture (EDMA)",
+    "primary_db": "Supabase PostgreSQL (pooler)",
+    "orm": "SQLAlchemy Async + asyncpg",
+    "ssl": {
+      "ca_env_var": "NAQL_SSL_CA_FILE"
+    }
+  },
+  "services": {
+    "identity-service": {
+      "port": 8001,
+      "api_prefix": "/api/v1",
+      "persistence": {
+        "status": "VERIFIED",
+        "verification": {
+          "created_user_id": "8c620951-33a8-4ef5-a282-9fba8cd8cbf4",
+          "proof": "POST /auth/register -> restart -> GET /users/me"
+        }
+      },
+      "tables": [
+        "users",
+        "api_keys",
+        "user_documents"
+      ],
+      "endpoints": [
+        "POST /api/v1/auth/register",
+        "POST /api/v1/auth/login",
+        "GET /api/v1/users/me",
+        "GET /api/v1/users/{user_id}",
+        "PATCH /api/v1/users/{user_id}",
+        "POST /api/v1/users/{user_id}/kyc",
+        "GET /api/v1/users"
+      ]
+    },
+    "fleet-service": {
+      "port": 8002,
+      "api_prefix": "/api/v1",
+      "persistence": {
+        "status": "VERIFIED",
+        "verification": {
+          "created_truck_id": "1af055fa-58d9-4624-9ccf-e800580d1f11",
+          "proof": "POST /trucks -> restart -> GET /trucks/{id}"
+        }
+      },
+      "tables": [
+        "trucks",
+        "truck_maintenance"
+      ],
+      "endpoints": [
+        "POST /api/v1/trucks",
+        "GET /api/v1/trucks",
+        "GET /api/v1/trucks/{truck_id}",
+        "PATCH /api/v1/trucks/{truck_id}",
+        "GET /api/v1/trucks/owner/{owner_id}",
+        "POST /api/v1/trucks/{truck_id}/maintenance"
+      ]
+    },
+    "matching-engine": {
+      "port": 8003,
+      "api_prefix": "/api/v1",
+      "persistence": {
+        "status": "VERIFIED",
+        "verification": {
+          "created_shipment_id": "dcf0a32d-09cf-43b7-80fc-27b6f38ae6fd",
+          "proof": "POST /shipments -> restart -> GET /shipments/{id}"
+        }
+      },
+      "grpc_dependencies": {
+        "fleet-service": {
+          "port": 50051,
+          "method": "GetTruckDetails",
+          "trigger": "POST /api/v1/trucks/location"
+        },
+        "identity-service": {
+          "port": 50052,
+          "method": "GetUserDetails",
+          "trigger": "POST /api/v1/shipments"
+        },
+        "fintrack-service": {
+          "port": 50054,
+          "method": "CreateInvoice",
+          "trigger": "POST /api/v1/shipments (auto after save)"
+        }
+      },
+      "tables": [
+        "shipments",
+        "shipment_audit_log",
+        "match_history",
+        "driver_preferences",
+        "trips"
+      ],
+      "endpoints": [
+        "POST /api/v1/shipments",
+        "GET /api/v1/shipments/{shipment_id}",
+        "POST /api/v1/match",
+        "POST /api/v1/match/available-trucks",
+        "POST /api/v1/match/decision",
+        "POST /api/v1/trucks/location"
+      ]
+    },
+    "fintrack-service": {
+      "port": 8004,
+      "api_prefix": "/api/v1",
+      "persistence": {
+        "status": "VERIFIED",
+        "verification": {
+          "created_invoice_id": "2a21d7e3-29c6-4435-a401-9cd6676d936a",
+          "proof": "POST /invoices -> restart -> GET /invoices/{id}"
+        }
+      },
+      "tables": [
+        "ledger_accounts",
+        "transactions",
+        "escrow_holds",
+        "invoices",
+        "ledger_entries"
+      ],
+      "endpoints": [
+        "POST /api/v1/invoices",
+        "GET /api/v1/invoices/{invoice_id}",
+        "POST /api/v1/quotes",
+        "POST /api/v1/escrow",
+        "POST /api/v1/escrow/release",
+        "POST /api/v1/payments",
+        "GET /api/v1/balance/{user_id}",
+        "GET /api/v1/transactions/{user_id}"
+      ]
+    },
+    "telemetry-ingress": {
+      "port": 8006,
+      "api_prefix": "/api/v1",
+      "persistence": {
+        "status": "VERIFIED",
+        "verification": {
+          "truck_id": "1af055fa-58d9-4624-9ccf-e800580d1f11",
+          "proof": "POST /telemetry -> restart -> GET /telemetry/truck/{truck_id}"
+        }
+      },
+      "tables": [
+        "truck_telemetry",
+        "truck_positions"
+      ],
+      "endpoints": [
+        "POST /api/v1/telemetry",
+        "GET /api/v1/telemetry/truck/{truck_id}"
+      ]
+    },
+    "agent-orchestrator": {
+      "port": 8005,
+      "api_prefix": null,
+      "persistence": {
+        "status": "PENDING"
+      },
+      "tables": [],
+      "endpoints": []
+    },
+    "gateway": {
+      "port": 4000,
+      "api_prefix": null,
+      "persistence": {
+        "status": "PENDING"
+      },
+      "tables": [],
+      "endpoints": []
+    }
+  },
+  "database_tables_current": [
+    "users",
+    "api_keys",
+    "user_documents",
+    "trucks",
+    "truck_maintenance",
+    "shipments",
+    "shipment_audit_log",
+    "match_history",
+    "driver_preferences",
+    "trips",
+    "ledger_accounts",
+    "transactions",
+    "escrow_holds",
+    "invoices",
+    "ledger_entries",
+    "truck_telemetry",
+    "truck_positions"
+  ]
+}

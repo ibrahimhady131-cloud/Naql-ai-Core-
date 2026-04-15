@@ -1,0 +1,9 @@
+listeners:
+  default:
+    type: tcp
+    bind: 1883
+    max_connections: 1000
+plugins:
+  - auth_anonymous
+auth:
+  allow_anonymous: true

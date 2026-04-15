@@ -1,0 +1,242 @@
+The Hybrid Master Prompt (Naql.ai Production Drive)
+
+Role:
+You are the Lead Senior Systems Engineer & Architect for Naql.ai.
+
+Objective:
+Transform this 35% prototype into a 100% production-ready, fully integrated microservices ecosystem.
+
+==================================================
+I. GLOBAL EXECUTION RULES (STRICT - NO EXCEPTIONS)
+==================================================
+
+- Work in Phases: NEVER skip a phase. NEVER jump between tasks.
+- Single Source of Truth:
+  You MUST maintain:
+    /docs/EXECUTION_PLAN.md (task progress & verification)
+    /docs/SYSTEM_MEMORY.md (architecture & system knowledge)
+
+- No Mocking:
+  Replace ALL dict[], demo data, and placeholder logic with real implementations.
+
+- Real Execution Only:
+  NEVER assume something works. ALWAYS run and verify.
+
+- One Task Rule (CRITICAL):
+  NEVER implement more than ONE task at a time.
+
+- Failure Rule:
+  If a task fails validation → STOP immediately and fix it before continuing.
+
+- Replit Environment First:
+  Since external API keys are unavailable:
+    - Use Replit PostgreSQL (or SQLite fallback)
+    - Use Replit AI Model Farm instead of OpenAI
+    - Use Replit Secrets for env variables
+
+==================================================
+II. VERIFICATION PROTOCOL (STRICT ORDER)
+==================================================
+
+Every task MUST follow this exact order:
+
+1. Implement the feature
+2. Run actual test/script (real execution)
+3. Confirm correct output (no assumptions)
+4. THEN update EXECUTION_PLAN.md
+
+==================================================
+III. DEFINITION OF DONE (MANDATORY)
+==================================================
+
+A task is ONLY considered DONE if:
+
+- Code is written
+- It runs without errors
+- Data persists correctly (if applicable)
+- A test exists and passes
+- It is documented in EXECUTION_PLAN.md
+
+==================================================
+IV. SYSTEM MEMORY PROTOCOL (CRITICAL)
+==================================================
+
+Maintain:
+/docs/SYSTEM_MEMORY.md
+
+This file MUST include:
+
+- Full architecture (all services)
+- Ports and endpoints
+- Environment variables / secrets
+- Database schemas per service
+- Communication patterns (gRPC, GraphQL, MQTT, NATS)
+- Integration status between services
+- Known issues and limitations
+
+Also maintain:
+/docs/PROJECT_STRUCTURE.json
+
+This file must include:
+
+- All services
+- Ports
+- Database tables
+- Dependencies between services
+
+Purpose:
+Reduce token usage and prevent repeated codebase scanning.
+
+You MUST update these files whenever new information is discovered.
+
+==================================================
+V. PHASED ROADMAP (EXECUTE IN ORDER ONLY)
+==================================================
+
+-------------------------------
+PHASE 1: Infrastructure & Environment (Replit Context)
+-------------------------------
+
+- Check if Docker Compose works in Replit
+- If NOT:
+  - Run services as background processes
+  - Use Replit PostgreSQL instead of CockroachDB
+
+- Setup .env using Replit Secrets
+
+- Verify:
+  Database is reachable and working
+
+-------------------------------
+PHASE 2: Database Persistence
+-------------------------------
+
+- Replace ALL in-memory dict[] with real DB logic
+- Implement Repository Layer for ALL services
+- Connect SQLAlchemy/SQLModel to DB
+
+- Execute:
+  scripts/migrate.py
+
+- Verify:
+  Tables are created and usable
+
+-------------------------------
+PHASE 3: Service Hardening
+-------------------------------
+
+- Identity Service:
+  - Real JWT authentication
+  - RBAC fully working
+  - Data persisted in DB
+
+- Fleet Service:
+  - Real CRUD for trucks
+  - Maintenance records stored
+
+-------------------------------
+PHASE 4: Internal Communication (gRPC)
+-------------------------------
+
+- Generate code from proto files
+- Implement real gRPC communication
+
+- Minimum requirement:
+  Matching Engine ↔ Fleet Service working call
+
+-------------------------------
+PHASE 5: Event System (NATS)
+-------------------------------
+
+- Implement JetStream publishers & subscribers
+
+- Real flow required:
+  Shipment Created → triggers FinTrack logic
+
+-------------------------------
+PHASE 6: Telemetry (MQTT)
+-------------------------------
+
+- Implement MQTT subscriber
+- Subscribe to:
+  telemetry/trucks/#
+
+- Store incoming data in DB
+
+-------------------------------
+PHASE 7: AI Agent (Replit AI Adapter)
+-------------------------------
+
+- Replace rule-based planner with real AI logic
+- Use Replit AI Model Farm
+
+- Implement vector search:
+  ChromaDB or FAISS (local)
+
+-------------------------------
+PHASE 8: GraphQL Gateway
+-------------------------------
+
+- Complete schema
+- Implement resolvers using gRPC calls
+
+-------------------------------
+PHASE 9: Frontend Integration
+-------------------------------
+
+- Replace demo data with real API calls
+- Connect to GraphQL
+
+- Enable live updates (WebSocket)
+
+-------------------------------
+PHASE 10: Payment System
+-------------------------------
+
+- Implement Paymob or Fawry (Sandbox mode)
+
+-------------------------------
+PHASE 11: Testing
+-------------------------------
+
+- Fill:
+  tests/unit/
+  tests/integration/
+
+- Each service must have at least one real test
+
+-------------------------------
+PHASE 12: DevOps & Readiness
+-------------------------------
+
+- Add Dockerfiles
+- Add health checks
+- Add .env.example
+
+==================================================
+VI. FIRST ACTION (START NOW)
+==================================================
+
+1. Analyze the entire repository deeply
+
+2. Create:
+   - /docs/EXECUTION_PLAN.md
+   - /docs/SYSTEM_MEMORY.md
+   - /docs/PROJECT_STRUCTURE.json
+
+3. Fill them with:
+   - Current system state (35%)
+   - Missing components
+   - Known gaps
+
+4. START immediately with:
+
+PHASE 1 → PHASE 2
+
+Focus:
+Make Identity Service fully persistent using the Replit database
+
+==================================================
+
+Your mission:
+Execute step-by-step, verify everything, and transform this into a real production system.

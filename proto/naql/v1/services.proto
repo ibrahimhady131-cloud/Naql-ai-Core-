@@ -1,0 +1,469 @@
+syntax = "proto3";
+
+package naql.v1;
+
+option go_package = "github.com/naql-ai/proto/naql/v1";
+
+import "google/protobuf/timestamp.proto";
+
+// ============================================================
+// Common Types
+// ============================================================
+
+message Coordinate {
+  double latitude = 1;
+  double longitude = 2;
+  string h3_index = 3;
+}
+
+message PaginationRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message PaginationResponse {
+  int32 total = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  bool has_next = 4;
+}
+
+// ============================================================
+// Identity Service
+// ============================================================
+
+service IdentityService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (LoginResponse);
+  rpc GetUser(GetUserRequest) returns (UserResponse);
+  rpc GetUserDetails(GetUserRequest) returns (UserResponse);
+  rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
+  rpc VerifyKYC(VerifyKYCRequest) returns (UserResponse);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+}
+
+message RegisterRequest {
+  string email = 1;
+  string phone = 2;
+  string password = 3;
+  string full_name = 4;
+  string role = 5;
+  string region_code = 6;
+  string national_id = 7;
+}
+
+message RegisterResponse {
+  string user_id = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string user_id = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+  string role = 4;
+  string region_code = 5;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message UpdateUserRequest {
+  string user_id = 1;
+  optional string full_name = 2;
+  optional string phone = 3;
+  optional string profile_image_url = 4;
+}
+
+message VerifyKYCRequest {
+  string user_id = 1;
+  string kyc_status = 2;
+  string verified_by = 3;
+}
+
+message UserResponse {
+  string id = 1;
+  string email = 2;
+  string phone = 3;
+  string full_name = 4;
+  string role = 5;
+  string kyc_status = 6;
+  double reputation_score = 7;
+  string region_code = 8;
+  bool is_active = 10;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message ListUsersRequest {
+  PaginationRequest pagination = 1;
+  optional string role = 2;
+  optional string region_code = 3;
+}
+
+message ListUsersResponse {
+  repeated UserResponse users = 1;
+  PaginationResponse pagination = 2;
+}
+
+// ============================================================
+// Fleet Service
+// ============================================================
+
+service FleetService {
+  rpc RegisterTruck(RegisterTruckRequest) returns (TruckResponse);
+  rpc GetTruck(GetTruckRequest) returns (TruckResponse);
+  rpc GetTruckDetails(GetTruckRequest) returns (TruckResponse);
+  rpc UpdateTruckStatus(UpdateTruckStatusRequest) returns (TruckResponse);
+  rpc ListTrucks(ListTrucksRequest) returns (ListTrucksResponse);
+  rpc GetTrucksByOwner(GetTrucksByOwnerRequest) returns (ListTrucksResponse);
+  rpc AddMaintenance(AddMaintenanceRequest) returns (MaintenanceResponse);
+  rpc GetMaintenanceHistory(GetMaintenanceHistoryRequest) returns (ListMaintenanceResponse);
+}
+
+message RegisterTruckRequest {
+  string owner_id = 1;
+  string license_plate = 2;
+  string truck_type = 3;
+  int32 load_capacity_kg = 4;
+  optional string vin = 5;
+  optional string make = 6;
+  optional string model = 7;
+  optional int32 year = 8;
+  bool has_refrigeration = 9;
+  string region_code = 10;
+  optional string telemetry_device_id = 11;
+}
+
+message GetTruckRequest {
+  string truck_id = 1;
+}
+
+message UpdateTruckStatusRequest {
+  string truck_id = 1;
+  string status = 2;
+}
+
+message ListTrucksRequest {
+  PaginationRequest pagination = 1;
+  optional string truck_type = 2;
+  optional string status = 3;
+  optional string region_code = 4;
+}
+
+message GetTrucksByOwnerRequest {
+  string owner_id = 1;
+  PaginationRequest pagination = 2;
+}
+
+message TruckResponse {
+  string id = 1;
+  string owner_id = 2;
+  string license_plate = 3;
+  string truck_type = 4;
+  int32 load_capacity_kg = 5;
+  string status = 6;
+  string region_code = 7;
+  optional string vin = 8;
+  optional string make = 9;
+  optional string model = 10;
+  bool has_refrigeration = 11;
+  google.protobuf.Timestamp created_at = 12;
+}
+
+message ListTrucksResponse {
+  repeated TruckResponse trucks = 1;
+  PaginationResponse pagination = 2;
+}
+
+message AddMaintenanceRequest {
+  string truck_id = 1;
+  string maintenance_type = 2;
+  string description = 3;
+  double cost_egp = 4;
+  int32 odometer_km = 5;
+  google.protobuf.Timestamp performed_at = 6;
+  optional google.protobuf.Timestamp next_due_at = 7;
+}
+
+message MaintenanceResponse {
+  string id = 1;
+  string truck_id = 2;
+  string maintenance_type = 3;
+  string description = 4;
+  double cost_egp = 5;
+  google.protobuf.Timestamp performed_at = 6;
+}
+
+message GetMaintenanceHistoryRequest {
+  string truck_id = 1;
+  PaginationRequest pagination = 2;
+}
+
+message ListMaintenanceResponse {
+  repeated MaintenanceResponse records = 1;
+  PaginationResponse pagination = 2;
+}
+
+// ============================================================
+// Matching Engine
+// ============================================================
+
+service MatchingService {
+  rpc RequestMatch(MatchRequest) returns (MatchResponse);
+  rpc GetAvailableTrucks(AvailableTrucksRequest) returns (AvailableTrucksResponse);
+  rpc RespondToMatch(MatchDecisionRequest) returns (MatchDecisionResponse);
+  rpc UpdateTruckLocation(TruckLocationUpdate) returns (TruckLocationAck);
+  rpc StreamTruckLocations(stream TruckLocationUpdate) returns (stream TruckLocationAck);
+}
+
+message MatchRequest {
+  string shipment_id = 1;
+  Coordinate origin = 2;
+  Coordinate destination = 3;
+  string required_truck_type = 4;
+  double weight_kg = 5;
+  bool requires_refrigeration = 6;
+  double search_radius_km = 7;
+  int32 max_candidates = 8;
+}
+
+message MatchCandidate {
+  string driver_id = 1;
+  string truck_id = 2;
+  double score = 3;
+  double distance_km = 4;
+  int32 eta_minutes = 5;
+  double driver_rating = 6;
+  string truck_type = 7;
+}
+
+message MatchResponse {
+  string match_id = 1;
+  repeated MatchCandidate candidates = 2;
+  int32 total_searched = 3;
+}
+
+message AvailableTrucksRequest {
+  Coordinate center = 1;
+  double radius_km = 2;
+  optional string truck_type = 3;
+  optional int32 min_capacity_kg = 4;
+}
+
+message AvailableTrucksResponse {
+  repeated MatchCandidate trucks = 1;
+}
+
+message MatchDecisionRequest {
+  string match_id = 1;
+  string driver_id = 2;
+  string decision = 3;  // accepted, rejected
+}
+
+message MatchDecisionResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message TruckLocationUpdate {
+  string truck_id = 1;
+  string driver_id = 2;
+  double latitude = 3;
+  double longitude = 4;
+  double speed_kmh = 5;
+  double heading = 6;
+  google.protobuf.Timestamp timestamp = 7;
+}
+
+message TruckLocationAck {
+  bool received = 1;
+  string h3_index = 2;
+}
+
+// ============================================================
+// FinTrack Service
+// ============================================================
+
+service FinTrackService {
+  rpc CreateQuote(CreateQuoteRequest) returns (QuoteResponse);
+  rpc CreateEscrow(CreateEscrowRequest) returns (EscrowResponse);
+  rpc ReleaseEscrow(ReleaseEscrowRequest) returns (EscrowResponse);
+  rpc ProcessPayment(ProcessPaymentRequest) returns (PaymentResponse);
+  rpc GetBalance(GetBalanceRequest) returns (BalanceResponse);
+  rpc GetTransactionHistory(TransactionHistoryRequest) returns (TransactionHistoryResponse);
+  rpc CreateInvoice(InvoiceRequest) returns (InvoiceResponse);
+}
+
+message CreateQuoteRequest {
+  double distance_km = 1;
+  string truck_type = 2;
+  double weight_kg = 3;
+  bool requires_refrigeration = 4;
+  string origin_region = 5;
+  string dest_region = 6;
+}
+
+message QuoteResponse {
+  double total_egp = 1;
+  double fuel_cost_egp = 2;
+  double toll_cost_egp = 3;
+  double service_fee_egp = 4;
+  double insurance_fee_egp = 5;
+  string quote_id = 6;
+  google.protobuf.Timestamp valid_until = 7;
+}
+
+message CreateEscrowRequest {
+  string shipment_id = 1;
+  string payer_user_id = 2;
+  double amount_egp = 3;
+}
+
+message EscrowResponse {
+  string escrow_id = 1;
+  string status = 2;
+  double amount_egp = 3;
+}
+
+message ReleaseEscrowRequest {
+  string escrow_id = 1;
+  string release_to_user_id = 2;
+}
+
+message ProcessPaymentRequest {
+  string user_id = 1;
+  double amount_egp = 2;
+  string payment_method = 3;
+  string shipment_id = 4;
+}
+
+message PaymentResponse {
+  string transaction_id = 1;
+  string status = 2;
+  string gateway_ref = 3;
+}
+
+message GetBalanceRequest {
+  string user_id = 1;
+}
+
+message BalanceResponse {
+  string user_id = 1;
+  double available_egp = 2;
+  double held_egp = 3;
+  double total_egp = 4;
+}
+
+message TransactionHistoryRequest {
+  string user_id = 1;
+  PaginationRequest pagination = 2;
+  optional string transaction_type = 3;
+}
+
+message TransactionHistoryResponse {
+  repeated TransactionRecord transactions = 1;
+  PaginationResponse pagination = 2;
+}
+
+message TransactionRecord {
+  string id = 1;
+  string reference_number = 2;
+  double amount_egp = 3;
+  string transaction_type = 4;
+  string status = 5;
+  string payment_method = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+// ============================================================
+// Agent Orchestrator
+// ============================================================
+
+service AgentService {
+  rpc Chat(ChatRequest) returns (ChatResponse);
+  rpc StreamChat(ChatRequest) returns (stream ChatStreamChunk);
+  rpc GetConversationHistory(GetHistoryRequest) returns (ConversationHistory);
+  rpc ExecuteAction(ActionRequest) returns (ActionResponse);
+}
+
+message ChatRequest {
+  string user_id = 1;
+  string session_id = 2;
+  string message = 3;
+  string language = 4;  // ar, en
+  map<string, string> context = 5;
+}
+
+message ChatResponse {
+  string response = 1;
+  repeated AgentAction actions_taken = 2;
+  string session_id = 3;
+}
+
+message ChatStreamChunk {
+  string content = 1;
+  bool is_final = 2;
+  optional AgentAction action = 3;
+}
+
+message AgentAction {
+  string tool_name = 1;
+  string tool_input = 2;
+  string tool_output = 3;
+  bool success = 4;
+}
+
+message GetHistoryRequest {
+  string session_id = 1;
+  int32 limit = 2;
+}
+
+message ConversationHistory {
+  repeated ChatMessage messages = 1;
+}
+
+message ChatMessage {
+  string role = 1;
+  string content = 2;
+  google.protobuf.Timestamp timestamp = 3;
+}
+
+message ActionRequest {
+  string action_type = 1;
+  map<string, string> parameters = 2;
+  string triggered_by = 3;
+}
+
+message ActionResponse {
+  bool success = 1;
+  string result = 2;
+  repeated string side_effects = 3;
+}
+
+message InvoiceRequest {
+  string shipment_id = 1;
+  string shipper_id = 2;
+  double amount = 3;
+  string currency = 4;
+}
+
+message InvoiceResponse {
+  string invoice_id = 1;
+  string shipment_id = 2;
+  double amount = 3;
+  string currency = 4;
+  string status = 5;
+  google.protobuf.Timestamp created_at = 6;
+}

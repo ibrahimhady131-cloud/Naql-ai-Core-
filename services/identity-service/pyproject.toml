@@ -1,0 +1,28 @@
+[project]
+name = "naql-identity-service"
+version = "0.1.0"
+description = "Identity & Authentication Service for Naql.ai"
+requires-python = ">=3.12"
+
+dependencies = [
+    "fastapi>=0.110,<1",
+    "uvicorn[standard]>=0.29,<1",
+    "grpcio>=1.62,<2",
+    "grpcio-tools>=1.62,<2",
+    "sqlalchemy>=2.0,<3",
+    "asyncpg>=0.29,<1",
+    "passlib[bcrypt]>=1.7,<2",
+    "pyjwt>=2.8,<3",
+    "pydantic>=2.6,<3",
+    "pydantic-settings>=2.2,<3",
+    "naql-common",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9",
+    "pytest-asyncio>=0.23,<1",
+    "httpx>=0.27,<1",
+    "ruff>=0.3,<1",
+    "mypy>=1.9,<2",
+]

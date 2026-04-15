@@ -1,0 +1,35 @@
+
+> frontend@0.1.0 dev
+> next dev -p 5000 -H 0.0.0.0
+
+[1G[0K[1m[38;2;173;127;168m▲ Next.js 16.2.3[39m[22m (Turbopack)
+- Local:         http://localhost:5000
+- Network:       http://0.0.0.0:5000
+[32m[1m✓[22m[39m Ready in 354ms
+[35m[1mAttention[22m[39m: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+[36mhttps://nextjs.org/telemetry[39m
+
+
+ GET / [32m200[39m in 2.2s[2m (next.js: 1936ms, application-code: 223ms)[22m
+ GET / [32m200[39m in 2.4s[2m (next.js: 2.2s, application-code: 173ms)[22m
+[33m[1m⚠[22m[39m Blocked cross-origin request to Next.js dev resource /_next/webpack-hmr from "a98105b4-42e8-414e-99f7-9df19bb3354f-00-bjfxsb9mhahs.picard.replit.dev".
+Cross-origin access to Next.js dev resources is blocked by default for safety.
+
+To allow this host in development, add it to "allowedDevOrigins" in next.config.js and restart the dev server:
+
+// next.config.js
+module.exports = {
+  allowedDevOrigins: ['a98105b4-42e8-414e-99f7-9df19bb3354f-00-bjfxsb9mhahs.picard.replit.dev'],
+}
+
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ GET /dashboard [32m200[39m in 2.5s[2m (next.js: 2.3s, application-code: 266ms)[22m
+[33m[1m⚠[22m[39m Found a change in next.config.ts. Restarting the server to apply the changes...
+[1m[38;2;173;127;168m▲ Next.js 16.2.3[39m[22m (Turbopack)
+- Local:         http://localhost:5000
+- Network:       http://0.0.0.0:5000
+[32m[1m✓[22m[39m Ready in 583ms
+
+ GET / [32m200[39m in 1611ms[2m (next.js: 1454ms, application-code: 156ms)[22m

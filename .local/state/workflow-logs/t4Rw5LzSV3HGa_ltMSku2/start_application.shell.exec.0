@@ -1,0 +1,13 @@
+
+> frontend@0.1.0 dev
+> next dev -p 5000 -H 0.0.0.0
+
+[1G[0K[1m[38;2;173;127;168m▲ Next.js 16.2.3[39m[22m (Turbopack)
+- Local:         http://localhost:5000
+- Network:       http://0.0.0.0:5000
+[32m[1m✓[22m[39m Ready in 384ms
+
+ GET / [32m200[39m in 1773ms[2m (next.js: 1614ms, application-code: 159ms)[22m
+ GET /dashboard [32m200[39m in 48ms[2m (next.js: 20ms, application-code: 28ms)[22m
+ GET / [32m200[39m in 40ms[2m (next.js: 3ms, application-code: 37ms)[22m
+ GET /dashboard [32m200[39m in 34ms[2m (next.js: 3ms, application-code: 30ms)[22m
