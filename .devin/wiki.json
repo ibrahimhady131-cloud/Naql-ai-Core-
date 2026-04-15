@@ -1,0 +1,301 @@
+{
+  "repo_notes": [
+    {
+      "content": ""
+    }
+  ],
+  "pages": [
+    {
+      "title": "Naql.ai Overview",
+      "purpose": "High-level introduction to Naql.ai — an autonomous logistics ecosystem for the Egyptian market. Covers the project's mission, regional cell architecture, technology stack, and how the major subsystems relate. Links to all child sections for deeper exploration.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "System Architecture",
+      "purpose": "Detailed walkthrough of the Event-Driven Microservices Architecture (EDMA): the four-layer stack (Client → GraphQL Gateway → Service Mesh → Data Layer), regional Cell sharding across Egypt, and the end-to-end order-to-delivery data flow sequence diagram.",
+      "parent": "Naql.ai Overview",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Getting Started & Local Development",
+      "purpose": "Step-by-step guide for onboarding engineers: environment setup (Python 3.12, Node.js, venv), required environment variables, starting each service locally, running the NATS JetStream and MQTT broker, and using the naql_manager.py status command.",
+      "parent": "Naql.ai Overview ",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Backend Microservices",
+      "purpose": "Overview of all six Python/FastAPI microservices that form the Naql.ai service mesh. Each service runs independently, connects to CockroachDB or TimescaleDB, and exposes both HTTP REST and gRPC endpoints. Links to child pages for each service.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Identity Service",
+      "purpose": "Deep dive into the Identity Service (port 8001 / gRPC 50052): user registration and login, JWT-based authentication, RBAC roles and permissions (UserRole, Permission enums), KYC document verification, and the AuthManager class in naql_common/auth.",
+      "parent": "Backend Microservices",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Fleet Service",
+      "purpose": "Deep dive into the Fleet Service (port 8002 / gRPC 50051): truck registration and lifecycle management, truck types (flatbed, tanker, refrigerated, trailer, jumbo), maintenance record tracking, status transitions (available → en_route → loading → offline), and the trucks/truck_maintenance DB schema.",
+      "parent": "Backend Microservices",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Matching Engine",
+      "purpose": "Deep dive into the Matching Engine (port 8003 / gRPC 50053): shipment creation with H3 geo-indexing, truck-to-shipment matching algorithm, pricing calculation (fuel + tolls + fees), gRPC calls to Fleet and Identity services, NATS event publishing (shipment.created), and the shipments DB schema.",
+      "parent": "Backend Microservices",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "FinTrack Service",
+      "purpose": "Deep dive into the FinTrack Service (port 8004 / gRPC 50054): invoice creation, escrow management, payment link generation (Fawry/Paymob), ledger entries, the payment.confirmed NATS event, and the invoices/ledger_entries DB schema.",
+      "parent": "Backend Microservices",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Telemetry Ingress",
+      "purpose": "Deep dive into the Telemetry Ingress service (port 8006): MQTT subscriber on naql/telemetry/v1/{truck_id}/pos, paho-mqtt integration, HTTP fallback endpoints, TimescaleDB persistence for truck_positions and truck_telemetry tables, and the MessageProcessor batch pipeline.",
+      "parent": "Backend Microservices",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Agent Orchestrator",
+      "purpose": "Deep dive into the Agent Orchestrator (port 8005): LangGraph state machine (Planner → Fleet-Analyzer → Decision-Maker nodes), NATS shipment.created subscription, truck scoring algorithm, AI reasoning persistence via PATCH /api/v1/shipments/{id}/ai-reasoning, and the Sentinel monitor concept.",
+      "parent": "Backend Microservices",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "GraphQL Gateway",
+      "purpose": "Overview of the Strawberry/FastAPI GraphQL Gateway (port 4001): its role as the sole entry point for all frontend traffic, CORS configuration, and how it orchestrates backend services via HTTP without direct DB access. Links to schema and middleware child pages.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "GraphQL Schema & Resolvers",
+      "purpose": "Complete GraphQL schema reference: all types (User, Truck, Shipment, Balance, etc.), Queries (me, trucks, shipments, getLiveLocation, tripHistory, aiReasoning), and Mutations (register, login, requestMatch, getQuote, chat, getPaymentLink). Includes example queries and the ServiceClient HTTP orchestration pattern.",
+      "parent": "GraphQL Gateway",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Gateway Middleware & Auth",
+      "purpose": "Details on the gateway middleware stack: CORS configuration (GATEWAY_CORS_ORIGINS), authentication middleware, rate limiting, and the gateway-centric architecture principle (all frontend traffic via port 4001, never direct service calls).",
+      "parent": "GraphQL Gateway",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Shared Library (naql_common)",
+      "purpose": "Overview of the naql_common Python package shared across all services. Covers the four main modules: auth, db, events, and geo. Links to child pages for each module.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Database Layer (naql_common.db)",
+      "purpose": "CockroachDB async SQLAlchemy setup: init_cockroach(), CockroachSession dependency injection, base model mixins (TimestampMixin, RegionalMixin, SoftDeleteMixin), and all ORM models (identity.py, fleet.py, shipment.py, fintrack.py, telemetry.py, notification.py).",
+      "parent": "Shared Library (naql_common)",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Event Bus (naql_common.events)",
+      "purpose": "NATS JetStream integration: NATSClient class, NAQL_EVENTS stream configuration, publish/subscribe patterns, DomainEvent structure, durable consumers, and the publish_shipment_created() helper. Covers all event subjects (shipment.created, payment.confirmed, telemetry.geofence.entered).",
+      "parent": "Shared Library (naql_common)",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Geospatial Utilities (naql_common.geo)",
+      "purpose": "H3 hexagonal indexing library: Coordinate dataclass with to_h3() and distance_km() methods, BoundingBox geofencing, EGYPT_HUBS pre-configured geofences (Sokhna Port, Damietta Port, etc.), get_h3_ring() for nearby truck search, and REGION_CELLS governorate mapping.",
+      "parent": "Shared Library (naql_common)",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Frontend Dashboard",
+      "purpose": "Overview of the Next.js 14 frontend (App Router): Apollo Client GraphQL integration, dashboard layout, and the God View real-time monitoring interface. Links to child pages for the map and lifecycle components.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Live Fleet Map",
+      "purpose": "Leaflet-based LiveMap component: truck marker clustering for 100+ trucks, status color coding (Emerald=available, Blue=en_route, Amber=loading, Gray=offline), 3-second polling for position updates, hub overlay, and the TruckPosition type. Covers the 800px map height and z-index hierarchy.",
+      "parent": "Frontend Dashboard",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Lifecycle Sidebar & AI Reasoning Feed",
+      "purpose": "LifecycleSidebar component: shipment status stepper, AI reasoning timeline with step icons (Planner/Fleet/Decision/Match), trip playback replay animation, Pay Now payment flow (Gateway → FinTrack → portal URL), and the 3-second polling pattern for live updates.",
+      "parent": "Frontend Dashboard",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Inter-Service Communication",
+      "purpose": "Overview of the three communication protocols used across the service mesh: synchronous gRPC, asynchronous NATS JetStream events, and real-time MQTT telemetry. Links to child pages for each protocol.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "gRPC Service Contracts",
+      "purpose": "Complete gRPC reference from proto/naql/v1/services.proto: all five services (IdentityService, FleetService, MatchingService, FinTrackService, AgentService), message types, port assignments (50051-50056), and verified integration tests (Matching→Fleet, Matching→Identity, Matching→FinTrack).",
+      "parent": "Inter-Service Communication",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "NATS JetStream Event Bus",
+      "purpose": "NATS JetStream configuration: stream NAQL_EVENTS, subject hierarchy (shipment.>, telemetry.>, match.>), event payloads, durable consumer patterns, JetStream persistence guarantees, and the payment-to-lifecycle loop (payment.confirmed → Matching Engine → shipment status update).",
+      "parent": "Inter-Service Communication",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "MQTT Real-Time Telemetry",
+      "purpose": "MQTT broker setup (NATS MQTT Gateway on port 1883), topic structure (naql/telemetry/v1/{truck_id}/pos), paho-mqtt client in Telemetry Ingress, thread-safe async callback pattern, and the simulate_truck_mqtt.py simulation script.",
+      "parent": "Inter-Service Communication",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Data Layer & Migrations",
+      "purpose": "Overview of the three-database persistence strategy: CockroachDB for transactional data, TimescaleDB for time-series telemetry, and Redis Stack for geospatial caching. Links to child pages for schema details and migrations.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Database Schemas",
+      "purpose": "Complete schema reference for all tables: users, api_keys, user_documents (Identity); trucks, truck_maintenance (Fleet); shipments (Matching); invoices, ledger_entries (FinTrack); truck_positions, truck_telemetry (Telemetry/TimescaleDB). Includes column types, constraints, and H3 index usage.",
+      "parent": "Data Layer & Migrations",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Migrations & Initialization",
+      "purpose": "Database migration strategy: cockroachdb/ and timescaledb/ migration directories, scripts/init_db.py for schema initialization, Supabase pooler connection configuration, and persistence verification tests for each service.",
+      "parent": "Data Layer & Migrations",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Infrastructure & Deployment",
+      "purpose": "Overview of containerization and deployment tooling: Docker multi-stage builds, service port assignments, and the scripts/ utility collection. Links to child pages for Docker and scripts.",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Docker & Containerization",
+      "purpose": "Multi-stage Dockerfile.service and Dockerfile.gateway: build stages (base → production), shared library installation pattern, ARG SERVICE_NAME parameterization, port exposure (8001-8006), and uvicorn startup command. Covers the Kubernetes/EKS production deployment target.",
+      "parent": "Infrastructure & Deployment",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    },
+    {
+      "title": "Scripts & Simulation Tools",
+      "purpose": "Reference for all scripts/ utilities: mega_simulator.py (100-truck flood with MQTT + AI agent trigger, auto-dispatch phases A-D), simulate_truck_mqtt.py (single truck MQTT publisher), simulate_trip.py, naql_manager.py (service health dashboard), init_db.py, and the start_*.sh service launchers.",
+      "parent": "Infrastructure & Deployment",
+      "page_notes": [
+        {
+          "content": ""
+        }
+      ]
+    }
+  ]
+}
