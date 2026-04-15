@@ -122,7 +122,9 @@ export default function LifecycleSidebar({
     setPaymentLoading(true);
     // Simulate payment link generation
     await new Promise(resolve => setTimeout(resolve, 1500));
-    setPaymentLink("https://accept.paymob.com/api/acceptance/iframes/PL-ABC123DEF456");
+    const iframeId = 123456;
+    const paymentToken = "tok_mock_ABC123DEF456";
+    setPaymentLink(`https://accept.paymob.com/api/acceptance/iframes/${iframeId}?payment_token=${paymentToken}`);
     setPaymentLoading(false);
     setPaymentSuccess(true);
   };
