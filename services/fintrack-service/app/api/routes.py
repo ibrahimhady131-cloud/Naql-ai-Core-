@@ -370,6 +370,9 @@ async def payment_portal_confirm(link_id: str, session: CockroachSession) -> HTM
 @router.post("/payments/webhook")
 async def payment_webhook(payload: dict, session: CockroachSession) -> dict:
     """Webhook endpoint for payment confirmation from Paymob/Fawry."""
+    import json
+    import asyncio
+    
     # Validate webhook payload (in production, verify signature)
     link_id = payload.get("link_id") or payload.get("merchant_order_id")
     payment_status = payload.get("status", "").lower()
@@ -393,6 +396,23 @@ async def payment_webhook(payload: dict, session: CockroachSession) -> dict:
                         await session.commit()
                 except Exception:
                     pass
+            
+            # Publish payment.confirmed event to NATS
+            try:
+                import nats
+                nc = await nats.connect("nats://localhost:4222")
+                event_payload = {
+                    "shipment_id": invoice_id or link_id,
+                    "status": "paid",
+                    "amount": link.get("amount_egp", 0),
+                    "link_id": link_id,
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }
+                await nc.publish("payment.confirmed", json.dumps(event_payload).encode())
+                await nc.close()
+                print(f"[FinTrack] Published payment.confirmed event: {event_payload}")
+            except Exception as e:
+                print(f"[FinTrack] Warning: Failed to publish NATS event: {e}")
             
             return {"status": "success", "message": "Payment confirmed"}
         else:

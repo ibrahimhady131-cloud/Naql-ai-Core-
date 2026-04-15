@@ -102,11 +102,13 @@ export default function LifecycleSidebar({
   const { data: reasoningData, loading: reasoningLoading } = useQuery(AI_REASONING_QUERY, {
     variables: { shipmentId },
     skip: !shipmentId,
+    pollInterval: 3000,
   });
 
   const { data: historyData, loading: historyLoading } = useQuery(TRIP_HISTORY_QUERY, {
     variables: { shipmentId },
     skip: !shipmentId,
+    pollInterval: 3000,
   });
 
   const reasoningSteps: AIReasoningStep[] = reasoningData?.aiReasoning ?? [];

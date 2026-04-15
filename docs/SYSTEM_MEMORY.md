@@ -835,3 +835,13 @@ type Mutation {
 - **Payment Flow**: Gateway (4001) -> FinTrack (8004) -> Local Portal (http://localhost:8004/api/v1/payments/portal/{link_id})
 - **UI Polish**: Map 800px height, Sidebar z-index 1001, Status colors (Emerald/Blue/Amber/Gray)
 - **Verification**: Payment link returns local portal URL (not Paymob external)
+
+### Payment Callback Logic: Payment-to-Lifecycle Loop
+- **NATS Subject**: `payment.confirmed`
+- **Trigger**: When user clicks "Mark as Paid" in local portal, /confirm endpoint publishes to NATS
+- **Payload**: `{ "shipment_id": "...", "status": "paid", "amount": 719.22, "truck_id": "..." }`
+- **Subscriber**: Matching-Engine listens on `payment.confirmed`
+- **Action**: Update shipment status to `assigned` in database
+- **AI Reasoning**: Add thought "Payment verified. Dispatching truck ID {X} to pickup location."
+- **Frontend Auto-Update**: LifecycleSidebar polls shipment(id) every 3 seconds
+- **Visual Transition**: Truck marker changes from Green (available) to Blue (en_route) when status changes
