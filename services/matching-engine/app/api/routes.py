@@ -355,12 +355,52 @@ async def update_shipment_ai_reasoning(
         select(Shipment).where(Shipment.id == uuid.UUID(shipment_id))
     )
     shipment = result.scalar_one_or_none()
-    
+
     if not shipment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shipment not found")
-    
+
     shipment.ai_reasoning = thoughts
     await session.commit()
-    
+
     print(f"[Matching Engine] Updated AI reasoning for shipment {shipment_id}: {len(thoughts)} thoughts")
     return {"status": "success", "thoughts_count": len(thoughts)}
+
+
+@router.get("/shipments/by-truck/{truck_id}")
+async def get_shipment_by_truck(
+    truck_id: str,
+    session: CockroachSession,
+) -> ShipmentResponseSchema | None:
+    """Get the latest shipment assigned to a specific truck."""
+    result = await session.execute(
+        select(Shipment)
+        .where(Shipment.status.in_(["assigned", "in_transit", "en_route"]))
+        .order_by(Shipment.created_at.desc())
+        .limit(1)
+    )
+    shipment = result.scalar_one_or_none()
+
+    if not shipment:
+        return None
+
+    return ShipmentResponseSchema(
+        id=str(shipment.id),
+        reference_number=shipment.reference_number,
+        client_id=str(shipment.client_id),
+        region_code=shipment.region_code,
+        origin_address=shipment.origin_address,
+        origin_lat=float(shipment.origin_lat),
+        origin_lng=float(shipment.origin_lng),
+        origin_h3_index=shipment.origin_h3_index,
+        dest_address=shipment.dest_address,
+        dest_lat=float(shipment.dest_lat),
+        dest_lng=float(shipment.dest_lng),
+        dest_h3_index=shipment.dest_h3_index,
+        commodity_type=shipment.commodity_type,
+        weight_kg=float(shipment.weight_kg),
+        volume_cbm=float(shipment.volume_cbm) if shipment.volume_cbm else None,
+        requires_refrigeration=shipment.requires_refrigeration,
+        status=shipment.status,
+        quoted_price_egp=float(shipment.quoted_price_egp) if shipment.quoted_price_egp else None,
+        created_at=shipment.created_at.isoformat() if shipment.created_at else "",
+    )

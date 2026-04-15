@@ -31,13 +31,12 @@ const SHIPMENTS_QUERY = gql`
   }
 `;
 
-const ALL_POSITIONS_QUERY = gql`
-  query GetAllTruckPositions {
-    trucks(pageSize: 150) {
+const SHIPMENT_BY_TRUCK_QUERY = gql`
+  query GetShipmentByTruck($truckId: String!) {
+    shipment_by_truck(truckId: $truckId) {
       id
       status
-      licensePlate
-      truckType
+      referenceNumber
     }
   }
 `;
@@ -53,11 +52,20 @@ export default function DashboardPage() {
   const [positions, setPositions] = useState<TruckPosition[]>([]);
   const [selectedTruck, setSelectedTruck] = useState<TruckPosition | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedShipmentId, setSelectedShipmentId] = useState<string | undefined>(undefined);
+
+  // Query shipment by truck ID
+  const { data: shipmentByTruckData } = useQuery(SHIPMENT_BY_TRUCK_QUERY, {
+    variables: { truckId: selectedTruck?.truck_id },
+    skip: !selectedTruck?.truck_id,
+    pollInterval: 5000,
+  });
 
   // Debug: Log GraphQL data
   console.log(">>> GraphQL trucksData:", trucksData);
   console.log(">>> GraphQL trucksError:", trucksError);
   console.log(">>> trucksLoading:", trucksLoading);
+  console.log(">>> shipmentByTruckData:", shipmentByTruckData);
 
   useEffect(() => {
     if (trucksData?.trucks) {
@@ -74,8 +82,18 @@ export default function DashboardPage() {
     }
   }, [trucksData]);
 
+  // Update shipment ID when truck is selected
+  useEffect(() => {
+    if (shipmentByTruckData?.shipment_by_truck?.id) {
+      setSelectedShipmentId(shipmentByTruckData.shipment_by_truck.id);
+    } else {
+      setSelectedShipmentId(undefined);
+    }
+  }, [shipmentByTruckData]);
+
   const handleTruckClick = (truck: TruckPosition) => {
     setSelectedTruck(truck);
+    setSelectedShipmentId(undefined); // Reset when clicking new truck
     setSidebarOpen(true);
   };
 
@@ -158,6 +176,7 @@ export default function DashboardPage() {
       <LifecycleSidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        shipmentId={selectedShipmentId}
         truckId={selectedTruck?.truck_id}
         truckStatus={selectedTruck?.status}
       />

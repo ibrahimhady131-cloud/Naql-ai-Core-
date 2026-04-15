@@ -398,6 +398,34 @@ class Query:
         )
 
     @strawberry.field
+    async def shipment_by_truck(self, truck_id: str) -> Shipment | None:
+        """Get the active shipment for a truck."""
+        client = get_service_client()
+        data = client.get_shipment_by_truck(truck_id)
+        if data is None:
+            return None
+        return Shipment(
+            id=data["id"],
+            reference_number=data["reference_number"],
+            client_id=data.get("client_id", ""),
+            region_code=data.get("region_code", ""),
+            status=data["status"],
+            origin_address=data["origin_address"],
+            origin_lat=data.get("origin_lat", 0.0),
+            origin_lng=data.get("origin_lng", 0.0),
+            origin_h3_index=data.get("origin_h3_index", ""),
+            dest_address=data["dest_address"],
+            dest_lat=data.get("dest_lat", 0.0),
+            dest_lng=data.get("dest_lng", 0.0),
+            dest_h3_index=data.get("dest_h3_index", ""),
+            commodity_type=data["commodity_type"],
+            weight_kg=data["weight_kg"],
+            distance_km=data.get("distance_km"),
+            quoted_price_egp=data.get("quoted_price_egp"),
+            created_at=datetime.fromisoformat(str(data.get("created_at", datetime.now(UTC).isoformat()))),
+        )
+
+    @strawberry.field
     async def shipments(
         self,
         client_id: str | None = None,

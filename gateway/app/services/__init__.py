@@ -98,6 +98,16 @@ class ServiceClient:
         resp.raise_for_status()
         return resp.json()
 
+    def get_shipment_by_truck(self, truck_id: str) -> dict[str, Any] | None:
+        """GET /api/v1/shipments/by-truck/{truck_id} -> Matching Engine."""
+        resp = self._client.get(f"{self._matching_url}/api/v1/shipments/by-truck/{truck_id}")
+        if resp.status_code == 404:
+            return None
+        if resp.status_code == 204:
+            return None
+        resp.raise_for_status()
+        return resp.json()
+
     def list_shipments(self, client_id: str | None = None, status: str | None = None) -> list[dict[str, Any]]:
         """GET /api/v1/shipments -> Matching Engine."""
         params: dict[str, Any] = {}
