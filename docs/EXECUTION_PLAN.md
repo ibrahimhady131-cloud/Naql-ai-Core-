@@ -136,4 +136,11 @@
 - [COMPLETED] Frontend polling: LifecycleSidebar polls every 3 seconds
 - [COMPLETED] Visual transition: Truck marker colors (Green=available, Blue=en_route, Amber=loading, Gray=offline)
 
+## Phase 14: AI Persistence & Auto-Dispatch (IN PROGRESS)
+- [COMPLETED] AI Thoughts DB: Added ai_reasoning column to shipments table
+- [COMPLETED] Persistence API: PATCH /api/v1/shipments/{id}/ai-reasoning endpoint
+- [COMPLETED] Agent Integration: Agent Orchestrator persists thoughts after LangGraph completes
+- [COMPLETED] Auto-Dispatch: mega_simulator.py phases (Match -> Trip -> Arrival -> Delivered)
+- [COMPLETED] Frontend Live Feed: LifecycleSidebar with timestamps, icons, auto-scroll
+
 ## Overall Status: 100% COMPLETE

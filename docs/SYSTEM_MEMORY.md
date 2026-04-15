@@ -845,3 +845,13 @@ type Mutation {
 - **AI Reasoning**: Add thought "Payment verified. Dispatching truck ID {X} to pickup location."
 - **Frontend Auto-Update**: LifecycleSidebar polls shipment(id) every 3 seconds
 - **Visual Transition**: Truck marker changes from Green (available) to Blue (en_route) when status changes
+
+### AI Persistence & Auto-Dispatch
+- **AI Thoughts Storage**: `ai_reasoning` column in `shipments` table (JSONB array)
+- **Persistence Flow**: Agent Orchestrator calls `PATCH /api/v1/shipments/{id}/ai-reasoning` after LangGraph completes
+- **Auto-Dispatch Simulation** (mega_simulator.py):
+  - Phase A (Match): Assign truck to shipment, update status to assigned
+  - Phase B (Trip): Change truck status to in_transit
+  - Phase C (Arrival): Move truck coordinates toward destination (5% per tick)
+  - Phase D (Completion): When distance < 1km, mark delivered, truck back to available
+- **Frontend Live Feed**: LifecycleSidebar displays AI reasoning with timestamps and auto-scroll

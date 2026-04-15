@@ -193,4 +193,42 @@ async def run_agent_for_shipment(
     graph = create_agent_graph()
     final_state = await graph.ainvoke(initial_state)
 
+    # Persist AI thoughts to database
+    try:
+        import httpx
+        import json
+        from datetime import datetime, timezone
+        
+        # Convert thoughts to structured format
+        thoughts_data = []
+        for i, thought in enumerate(final_state.get("thoughts", [])):
+            # Parse thought to extract action and thought
+            action = "Reasoning"
+            if "[Agent] Planner" in thought:
+                action = "Planner"
+            elif "[Agent] Fleet Analyzer" in thought:
+                action = "Fleet Analyzer"
+            elif "[Agent] Decision-Maker" in thought:
+                action = "Decision-Maker"
+            
+            thoughts_data.append({
+                "step": i + 1,
+                "thought": thought,
+                "action": action,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            })
+        
+        # Call matching-engine to persist
+        async with httpx.AsyncClient() as client:
+            resp = await client.patch(
+                f"http://localhost:8003/api/v1/shipments/{shipment_id}/ai-reasoning",
+                json=thoughts_data,
+            )
+            if resp.status_code == 200:
+                print(f"[Agent] Persisted {len(thoughts_data)} thoughts to database for shipment {shipment_id}")
+            else:
+                print(f"[Agent] Failed to persist thoughts: {resp.status_code} {resp.text}")
+    except Exception as e:
+        print(f"[Agent] Error persisting thoughts: {e}")
+
     return final_state

@@ -185,11 +185,13 @@ class MegaSimulator:
             time.sleep(2)
 
     def start_shipment_generator(self):
-        print("\n[3/4] Starting shipment generator (every 15s)...")
+        print("\n[3/4] Starting shipment generator with auto-dispatch (every 15s)...")
         self.create_shipments_loop()
 
     def create_shipments_loop(self):
         shipment_counter = 1
+        active_shipments = {}  # shipment_id -> {truck_id, origin, dest, status, progress}
+        
         while True:
             time.sleep(15)
             
@@ -218,10 +220,85 @@ class MegaSimulator:
                 if resp.status_code in (200, 201):
                     shipment_id = resp.json().get("id", "unknown")
                     self.shipment_ids.append(shipment_id)
-                    print(f"\n[SHIPMENT #{shipment_counter}] {origin_city} -> {dest_city} | ID: {shipment_id[:8]}...")
+                    
+                    # Phase A: Assign a truck to this shipment
+                    if self.truck_ids:
+                        assigned_truck = random.choice(self.truck_ids)
+                        active_shipments[shipment_id] = {
+                            "truck_id": assigned_truck,
+                            "origin": origin,
+                            "dest": dest,
+                            "status": "assigned",
+                            "progress": 0.0,
+                            "current_pos": list(origin),
+                        }
+                        
+                        # Update truck status to in_transit
+                        self.http_client.patch(
+                            f"{FLEET_URL}/trucks/{assigned_truck}",
+                            json={"status": "en_route"}
+                        )
+                        print(f"\n[SHIPMENT #{shipment_counter}] {origin_city} -> {dest_city} | Truck: {assigned_truck[:8]}... (ASSIGNED)")
+                    
                     shipment_counter += 1
-            except Exception:
+            except Exception as e:
                 pass
+            
+            # Phase B-D: Update active shipments (trip simulation)
+            completed = []
+            for sid, info in active_shipments.items():
+                if info["status"] == "assigned":
+                    # Phase B: Start transit
+                    info["status"] = "in_transit"
+                    print(f"[TRIP] Shipment {sid[:8]}... now IN_TRANSIT")
+                
+                if info["status"] == "in_transit":
+                    # Phase C: Move truck toward destination
+                    dest_lat, dest_lng = info["dest"]
+                    curr_lat, curr_lng = info["current_pos"]
+                    
+                    # Calculate distance and move 5% closer each tick
+                    dist_lat = dest_lat - curr_lat
+                    dist_lng = dest_lng - curr_lng
+                    info["progress"] += 0.05
+                    
+                    info["current_pos"][0] = curr_lat + dist_lat * 0.05
+                    info["current_pos"][1] = curr_lng + dist_lng * 0.05
+                    
+                    # Publish updated position via MQTT
+                    payload = {
+                        "truck_id": info["truck_id"],
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "latitude": info["current_pos"][0],
+                        "longitude": info["current_pos"][1],
+                        "speed_kmh": 60,
+                        "fuel_level": 70,
+                        "heading": 45,
+                        "engine_temp": 90,
+                        "tire_pressure": [32, 32, 32, 32, 32, 32],
+                    }
+                    try:
+                        self.mqtt_client.publish(f"naql/telemetry/{info['truck_id']}", json.dumps(payload), qos=1)
+                    except:
+                        pass
+                    
+                    # Phase D: Check for arrival (distance < 1km)
+                    import math
+                    remaining_dist = math.sqrt(dist_lat**2 + dist_lng**2) * 111  # rough km
+                    if remaining_dist < 1 or info["progress"] >= 1.0:
+                        info["status"] = "delivered"
+                        completed.append(sid)
+                        
+                        # Update truck status back to available
+                        self.http_client.patch(
+                            f"{FLEET_URL}/trucks/{info['truck_id']}",
+                            json={"status": "available"}
+                        )
+                        print(f"[DELIVERED] Shipment {sid[:8]}... completed! Truck {info['truck_id'][:8]}... now AVAILABLE")
+            
+            # Remove completed shipments
+            for sid in completed:
+                del active_shipments[sid]
 
 if __name__ == "__main__":
     simulator = MegaSimulator()

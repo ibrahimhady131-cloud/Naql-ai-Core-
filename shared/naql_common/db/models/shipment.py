@@ -89,6 +89,9 @@ class Shipment(Base, TimestampMixin, RegionalMixin):
         String(30), nullable=False, server_default="draft", index=True
     )
     status_history: Mapped[dict] = mapped_column(JSONB, nullable=False, default=[])
+    ai_reasoning: Mapped[list[dict] | None] = mapped_column(
+        JSONB, nullable=True, default=[]
+    )
 
     # Metadata
     distance_km: Mapped[float | None] = mapped_column(Numeric(8, 2), nullable=True)

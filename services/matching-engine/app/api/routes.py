@@ -342,3 +342,25 @@ async def get_shipment(
         quoted_price_egp=float(shipment.quoted_price_egp) if shipment.quoted_price_egp else None,
         created_at=shipment.created_at.isoformat() if shipment.created_at else "",
     )
+
+
+@router.patch("/shipments/{shipment_id}/ai-reasoning")
+async def update_shipment_ai_reasoning(
+    shipment_id: str,
+    thoughts: list[dict],
+    session: CockroachSession,
+) -> dict:
+    """Update AI reasoning for a shipment (called by Agent Orchestrator)."""
+    result = await session.execute(
+        select(Shipment).where(Shipment.id == uuid.UUID(shipment_id))
+    )
+    shipment = result.scalar_one_or_none()
+    
+    if not shipment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Shipment not found")
+    
+    shipment.ai_reasoning = thoughts
+    await session.commit()
+    
+    print(f"[Matching Engine] Updated AI reasoning for shipment {shipment_id}: {len(thoughts)} thoughts")
+    return {"status": "success", "thoughts_count": len(thoughts)}

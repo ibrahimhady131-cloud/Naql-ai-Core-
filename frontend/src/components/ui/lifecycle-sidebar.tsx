@@ -262,16 +262,18 @@ export default function LifecycleSidebar({
           {reasoningLoading ? (
             <div className="text-gray-500 text-sm">Loading AI thoughts...</div>
           ) : reasoningSteps.length > 0 ? (
-            <div className="relative pl-4 border-l border-gray-700 space-y-4">
+            <div className="relative pl-4 border-l border-gray-700 space-y-4 max-h-[300px] overflow-y-auto" ref={(el) => el?.scrollTo(0, el.scrollHeight)}>
               {reasoningSteps.map((step, idx) => {
-                const icon = step.action?.toLowerCase().includes("planner") ? "???" : 
-                             step.action?.toLowerCase().includes("fleet") || step.action?.toLowerCase().includes("truck") ? "???" :
-                             step.action?.toLowerCase().includes("decision") ? "???" :
-                             step.action?.toLowerCase().includes("match") ? "???" : "??";
+                const getIcon = () => {
+                  if (step.action?.toLowerCase().includes("planner")) return "P";
+                  if (step.action?.toLowerCase().includes("fleet") || step.action?.toLowerCase().includes("truck")) return "F";
+                  if (step.action?.toLowerCase().includes("decision")) return "D";
+                  return "R";
+                };
                 return (
                   <div key={step.step} className="relative">
-                    <div className="absolute -left-[21px] top-1 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm">
-                      {icon}
+                    <div className="absolute -left-[21px] top-1 w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white">
+                      {getIcon()}
                     </div>
                     <div className="bg-gray-800 rounded-lg p-3 ml-2">
                       <div className="flex items-center gap-2 mb-1">
